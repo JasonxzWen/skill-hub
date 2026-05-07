@@ -1,0 +1,26 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+.*.swp
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Common dependency and build output
+node_modules/
+dist/
+build/
+coverage/
+__pycache__/
+.pytest_cache/
+
+# Downloaded third-party source snapshots
+vendor/everything-claude-code/
+vendor/vercel-labs-skills/
+vendor/vercel-labs-agent-skills/

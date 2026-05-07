@@ -1,0 +1,39 @@
+schema: spec-driven
+
+context: |
+  Project: skill-hub
+  Purpose: Curate and adapt famous agent skills into Codex-friendly versions.
+  Primary language: Chinese documentation, with source URLs and technical names preserved in English.
+  Initial focus: Superpowers, Everything Claude Code, and adjacent high-signal coding skill packs.
+  Constraints:
+    - Prefer source attribution over unattributed prompt copying.
+    - Adapt Claude Code tool assumptions to Codex-native tools and workflows.
+    - Keep skills focused, composable, and testable.
+    - Review licenses and security posture before importing third-party content.
+
+rules:
+  proposal:
+    - Keep proposals concise and include non-goals when useful.
+    - Call out upstream source projects and license/security considerations.
+  tasks:
+    - Break work into small verifiable steps.
+    - Include file paths and validation commands when implementation is expected.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
