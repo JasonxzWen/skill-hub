@@ -36,6 +36,10 @@ This project intentionally avoids installing every famous skill pack wholesale. 
 
 The project-local `.codex/skills/skill-creator` copy was removed. Codex already provides a current system `skill-creator` skill, and keeping a second project-local copy risks stale instructions and duplicate triggering.
 
+## Evaluated But Not Installed
+
+`forrestchang/andrej-karpathy-skills` was evaluated on 2026-05-08. Its `karpathy-guidelines` skill repeats the four project-level principles already present in root `AGENTS.md`: think before coding, simplicity first, surgical changes, and goal-driven execution. Do not install it as a separate skill unless the root guidance is removed or the upstream project adds a materially different workflow.
+
 ## Superpowers Decision
 
 Superpowers is not installed right now.
