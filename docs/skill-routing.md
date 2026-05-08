@@ -31,6 +31,7 @@ This project intentionally avoids installing every famous skill pack wholesale. 
 | General code quality | `coding-standards` | language/framework-specific skill when present |
 | Security review | `security-review` | `verification-loop` |
 | Find more skills | `find-skills` | system `skill-installer` for actual installs |
+| Evaluate third-party skills | `skill-evaluator` | `find-skills` only when searching for alternatives |
 
 ## Removed Duplicate
 

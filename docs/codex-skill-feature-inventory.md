@@ -35,6 +35,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Codex-ready ECC skills | 32 | `.agents/skills/` |
 | Vercel skills | 5 | `.agents/skills/` |
 | Ralph loop skills | 2 | `.agents/skills/` |
+| Local governance skills | 1 | `.agents/skills/` |
 | Adapted Anthropic/Claude built-ins | 20 | `.codex/skills/` |
 | Codex role configs | 3 | `.codex/agents/` |
 | Codex reference supplement | 1 | `.codex/AGENTS.md` |

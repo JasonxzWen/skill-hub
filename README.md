@@ -73,6 +73,7 @@ This hub will track Codex-ready adaptations for:
 - [Everything Claude Code local setup](docs/ecc-local-setup.md)
 - [Vercel Skills local setup](docs/vercel-skills-local-setup.md)
 - [Ralph Loop Codex setup](docs/ralph-loop.md)
+- [Skill evaluation policy](docs/skill-evaluation-policy.md)
 - [Skill routing and de-duplication](docs/skill-routing.md)
 - [MCP validation notes](docs/mcp-validation.md)
 - [Source projects and candidates](docs/source-projects.md)

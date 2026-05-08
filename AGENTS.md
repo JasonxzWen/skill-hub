@@ -81,3 +81,17 @@ Use `docs/skill-routing.md` to resolve overlapping skills. Prefer the narrowest 
 - Durable Playwright suites: `e2e-testing`.
 - Skill creation/update: use Codex's system `skill-creator`, not a project-local copy.
 - Ralph autonomous story loops: use `ralph-prd` to prepare PRDs and `ralph-loop` only when the user explicitly wants Ralph-style repeated execution.
+
+## Third-Party Skill Evaluation
+
+Use `skill-evaluator` whenever the user asks to evaluate, install, compare, or import a third-party skill repository.
+
+For every third-party skill evaluation:
+
+- Read upstream README, skill bodies, plugin metadata, and license before deciding.
+- Compare against `.agents/skills`, `.codex/skills`, root `AGENTS.md`, and `docs/skill-routing.md`.
+- Install only when the candidate fills a real gap or provides a materially better bounded workflow.
+- Prefer reject or explicit-only status when the candidate repeats existing behavior or would create trigger noise.
+- Update `docs/source-projects.md` and `docs/skill-routing.md` immediately with the decision, including rejected candidates.
+- Update `README.md`, `docs/codex-skill-feature-inventory.md`, and `.gitignore` when installation, counts, sources, vendor paths, or runtime state change.
+- Run `scripts/validate-skills.ps1 -SkipExternal` before finishing.

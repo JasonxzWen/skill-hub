@@ -47,6 +47,7 @@ This file tracks source projects that are worth studying or adapting for Codex.
 
 ## Import Policy
 
+- Use `skill-evaluator` for every third-party skill evaluation, including rejected candidates.
 - Do not copy large third-party skill bodies without checking license and attribution.
 - Prefer adaptation notes and small original Codex-native skills over bulk prompt mirroring.
 - Record source URL, license, upstream version/date, and local modifications for every imported skill.
