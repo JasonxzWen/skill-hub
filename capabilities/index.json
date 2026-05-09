@@ -1,0 +1,233 @@
+{
+  "version": "0.1.0",
+  "generatedAt": "2026-05-09",
+  "defaults": {
+    "profile": "minimal",
+    "agents": ["codex"]
+  },
+  "profiles": {
+    "minimal": {
+      "description": "Low-noise daily engineering profile with HTML reports, quality, TDD, verification, security, docs lookup, and self-debugging.",
+      "components": [
+        "skill:html-work-reports",
+        "skill:coding-standards",
+        "skill:tdd-workflow",
+        "skill:verification-loop",
+        "skill:security-review",
+        "skill:documentation-lookup",
+        "skill:agent-introspection-debugging"
+      ]
+    },
+    "web": {
+      "description": "Frontend and browser-validation profile for web UI work.",
+      "components": [
+        "skill:html-work-reports",
+        "skill:frontend-design",
+        "skill:web-artifacts-builder",
+        "skill:frontend-slides",
+        "skill:frontend-patterns",
+        "skill:webapp-testing",
+        "skill:web-design-guidelines",
+        "skill:e2e-testing"
+      ]
+    },
+    "openspec-formal": {
+      "description": "Formal OpenSpec lifecycle profile for explicit change proposals, implementation tasks, and archiving.",
+      "components": [
+        "skill:openspec-explore",
+        "skill:openspec-propose",
+        "skill:openspec-apply-change",
+        "skill:openspec-archive-change"
+      ]
+    },
+    "ralph": {
+      "description": "Ralph PRD and autonomous iteration helpers. Use only when the user explicitly wants Ralph-style repeated execution.",
+      "components": [
+        "skill:ralph-prd",
+        "skill:ralph-loop"
+      ]
+    }
+  },
+  "components": {
+    "skill:html-work-reports": {
+      "kind": "skill",
+      "path": ".agents/skills/html-work-reports",
+      "version": "0.1.0",
+      "source": "local",
+      "provides": ["self-contained-html-reports", "interactive-work-artifacts", "html-change-reports"],
+      "overlapsWith": ["skill:web-artifacts-builder", "skill:frontend-slides", "skill:frontend-design"],
+      "routing": "Default for non-trivial reports, plans, reviews, status updates, and explainers when Markdown is too flat."
+    },
+    "skill:coding-standards": {
+      "kind": "skill",
+      "path": ".agents/skills/coding-standards",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["code-quality-baseline"],
+      "overlapsWith": [],
+      "routing": "General implementation quality."
+    },
+    "skill:tdd-workflow": {
+      "kind": "skill",
+      "path": ".agents/skills/tdd-workflow",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["test-driven-development"],
+      "overlapsWith": ["skill:openspec-apply-change"],
+      "routing": "Default for feature work and bug fixes."
+    },
+    "skill:verification-loop": {
+      "kind": "skill",
+      "path": ".agents/skills/verification-loop",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["completion-verification"],
+      "overlapsWith": ["skill:openspec-apply-change"],
+      "routing": "Default before declaring work complete."
+    },
+    "skill:security-review": {
+      "kind": "skill",
+      "path": ".agents/skills/security-review",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["security-review"],
+      "overlapsWith": [],
+      "routing": "Security-sensitive code, auth, secrets, injection, unsafe IO, or payments."
+    },
+    "skill:documentation-lookup": {
+      "kind": "skill",
+      "path": ".agents/skills/documentation-lookup",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["current-docs-lookup"],
+      "overlapsWith": ["skill:deep-research", "skill:exa-search"],
+      "routing": "Library, framework, SDK, API, CLI, or cloud-service docs."
+    },
+    "skill:agent-introspection-debugging": {
+      "kind": "skill",
+      "path": ".agents/skills/agent-introspection-debugging",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["agent-self-debugging"],
+      "overlapsWith": ["skill:verification-loop"],
+      "routing": "Repeated agent failures, loops, drift, or recoverable tool failures."
+    },
+    "skill:frontend-design": {
+      "kind": "skill",
+      "path": ".codex/skills/frontend-design",
+      "version": "0.1.0",
+      "source": "anthropic-builtins-adapted",
+      "provides": ["visual-frontend-creation"],
+      "overlapsWith": ["skill:html-work-reports", "skill:web-artifacts-builder"],
+      "routing": "Use for polished product UI or web pages, not routine work reports."
+    },
+    "skill:web-artifacts-builder": {
+      "kind": "skill",
+      "path": ".codex/skills/web-artifacts-builder",
+      "version": "0.1.0",
+      "source": "anthropic-builtins-adapted",
+      "provides": ["complex-html-artifacts", "react-bundled-artifacts"],
+      "overlapsWith": ["skill:html-work-reports", "skill:frontend-design"],
+      "routing": "Use for complex React/Tailwind/shadcn artifacts."
+    },
+    "skill:frontend-slides": {
+      "kind": "skill",
+      "path": ".agents/skills/frontend-slides",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["html-presentations"],
+      "overlapsWith": ["skill:html-work-reports"],
+      "routing": "Use for slide decks and PPT/PPTX-to-web work."
+    },
+    "skill:frontend-patterns": {
+      "kind": "skill",
+      "path": ".agents/skills/frontend-patterns",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["frontend-engineering-patterns"],
+      "overlapsWith": ["skill:frontend-design"],
+      "routing": "Use for React, state, forms, routing, and accessibility patterns."
+    },
+    "skill:webapp-testing": {
+      "kind": "skill",
+      "path": ".codex/skills/webapp-testing",
+      "version": "0.1.0",
+      "source": "anthropic-builtins-adapted",
+      "provides": ["one-off-browser-debugging"],
+      "overlapsWith": ["skill:e2e-testing"],
+      "routing": "One-off local browser inspection."
+    },
+    "skill:web-design-guidelines": {
+      "kind": "skill",
+      "path": ".agents/skills/web-design-guidelines",
+      "version": "0.1.0",
+      "source": "vercel-agent-skills",
+      "provides": ["ui-a11y-audit"],
+      "overlapsWith": ["skill:frontend-design"],
+      "routing": "UI, UX, and accessibility audits."
+    },
+    "skill:e2e-testing": {
+      "kind": "skill",
+      "path": ".agents/skills/e2e-testing",
+      "version": "0.1.0",
+      "source": "everything-claude-code",
+      "provides": ["durable-playwright-suites"],
+      "overlapsWith": ["skill:webapp-testing"],
+      "routing": "Durable E2E suites and CI browser tests."
+    },
+    "skill:openspec-explore": {
+      "kind": "skill",
+      "path": ".codex/skills/openspec-explore",
+      "version": "1.0.0",
+      "source": "openspec",
+      "provides": ["formal-change-exploration"],
+      "overlapsWith": ["skill:brainstorming", "skill:product-capability"],
+      "routing": "Explicit OpenSpec exploration or formal change lifecycle only."
+    },
+    "skill:openspec-propose": {
+      "kind": "skill",
+      "path": ".codex/skills/openspec-propose",
+      "version": "1.0.0",
+      "source": "openspec",
+      "provides": ["formal-change-proposal"],
+      "overlapsWith": ["skill:product-capability", "skill:ralph-prd"],
+      "routing": "Explicit OpenSpec proposal generation."
+    },
+    "skill:openspec-apply-change": {
+      "kind": "skill",
+      "path": ".codex/skills/openspec-apply-change",
+      "version": "1.0.0",
+      "source": "openspec",
+      "provides": ["formal-change-task-implementation"],
+      "overlapsWith": ["skill:tdd-workflow", "skill:verification-loop"],
+      "routing": "Implementing an already-created OpenSpec change."
+    },
+    "skill:openspec-archive-change": {
+      "kind": "skill",
+      "path": ".codex/skills/openspec-archive-change",
+      "version": "1.0.0",
+      "source": "openspec",
+      "provides": ["formal-change-archiving"],
+      "overlapsWith": [],
+      "routing": "Archiving completed OpenSpec changes."
+    },
+    "skill:ralph-prd": {
+      "kind": "skill",
+      "path": ".agents/skills/ralph-prd",
+      "version": "0.1.0",
+      "source": "ralph-adapted",
+      "provides": ["ralph-ready-prd"],
+      "overlapsWith": ["skill:openspec-propose", "skill:product-capability"],
+      "routing": "Use when the user explicitly wants Ralph-ready PRDs."
+    },
+    "skill:ralph-loop": {
+      "kind": "skill",
+      "path": ".agents/skills/ralph-loop",
+      "version": "0.1.0",
+      "source": "ralph-adapted",
+      "provides": ["ralph-autonomous-loop"],
+      "overlapsWith": ["skill:openspec-apply-change"],
+      "routing": "Use only for explicit Ralph-style repeated execution."
+    }
+  }
+}

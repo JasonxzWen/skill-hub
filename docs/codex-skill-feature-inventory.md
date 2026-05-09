@@ -16,6 +16,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Code review | Review for behavior regressions, security risks, maintainability, and missing tests. |
 | Debugging | Use reproducible symptoms, hypotheses, root-cause tracing, fix verification, and regression tests. |
 | Completion verification | Run relevant tests/checks before declaring work done. |
+| HTML work reports | Produce self-contained HTML reports, plans, reviews, research explainers, status dashboards, and lightweight editors when Markdown is too flat. |
 
 ## P0: Codex Adaptation Layer
 
@@ -35,11 +36,13 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Codex-ready ECC skills | 32 | `.agents/skills/` |
 | Vercel skills | 5 | `.agents/skills/` |
 | Ralph loop skills | 2 | `.agents/skills/` |
-| Local governance skills | 1 | `.agents/skills/` |
+| Local governance/reporting skills | 2 | `.agents/skills/` |
 | Adapted Anthropic/Claude built-ins | 20 | `.codex/skills/` |
 | Codex role configs | 3 | `.codex/agents/` |
 | Codex reference supplement | 1 | `.codex/AGENTS.md` |
 | Project Codex config | 1 | `.codex/config.toml` |
+| Capability graph | 1 | `capabilities/index.json` |
+| Node CLI | 1 | `bin/skill-hub.mjs` |
 
 ## Minimal Import Profile
 
@@ -51,3 +54,4 @@ The first usable Codex profile should include:
 4. Ralph-style repeated execution for PRD stories, when the user explicitly wants autonomous iteration.
 5. A small set of reviewer prompts: planner, code reviewer, security reviewer, build resolver.
 6. A source/license note for every adapted skill.
+7. A capability graph that marks overlap, routing, source, and install profiles before copying skills into target repos.

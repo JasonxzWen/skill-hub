@@ -16,6 +16,7 @@ This file tracks source projects that are worth studying or adapting for Codex.
 | [Ralph](https://github.com/snarktank/ralph) | Autonomous PRD story loop that repeatedly launches a fresh coding agent until every story passes. | Installed as a Codex-specific PowerShell runner plus two focused skills. The upstream Bash runner remains reference-only because it targets Amp and Claude Code. |
 | [Karpathy-inspired guidelines](https://github.com/forrestchang/andrej-karpathy-skills) | Four behavioral principles for reducing common LLM coding mistakes: clarify assumptions, keep changes simple, make surgical edits, and verify against goals. | Evaluated and not installed as a standalone skill because the same principles already live in root `AGENTS.md`; adding the skill would duplicate triggers. |
 | [OpenAI Codex plugins and skills](https://openai.com/academy/codex-plugins-and-skills/) | Official explanation of Codex plugins and skills. | Use for terminology and product-aligned guidance. |
+| [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) | Practical examples showing how self-contained HTML can outperform Markdown for plans, reviews, diagrams, decks, reports, research, and small editors. | Adapted as local `html-work-reports`; source is referenced, not copied. |
 
 ## Imported Sources
 
@@ -32,6 +33,7 @@ This file tracks source projects that are worth studying or adapting for Codex.
 | Vercel Web/React skills | `.agents/skills/vercel-react-best-practices/`, `.agents/skills/web-design-guidelines/`, `.agents/skills/vercel-composition-patterns/`, `.agents/skills/vercel-react-view-transitions/` | Copied from upstream `skills/` with Codex metadata added |
 | Ralph Codex skills and runner | `.agents/skills/ralph-prd/`, `.agents/skills/ralph-loop/`, `scripts/ralph/` | Adapted from upstream PRD skills and loop prompt under MIT |
 | Karpathy-style baseline instructions | `AGENTS.md` | Already present as project-level behavior guidance; no separate skill installed |
+| HTML work report guidance | `.agents/skills/html-work-reports/` | Original local skill inspired by Thariq Shihipar's HTML effectiveness article |
 
 ## Secondary Candidates
 
@@ -44,6 +46,13 @@ This file tracks source projects that are worth studying or adapting for Codex.
 | `frontend-design` and design-system skills | Frontend quality, visual taste, accessibility, reusable design systems. |
 | `agent-eval` and eval-harness skills | Repeatable evaluation of agent workflows and task outcomes. |
 | `continuous-learning` skills | Extract reusable project patterns from sessions and convert them into skills or instincts. |
+
+## Evaluated HTML Artifact Candidates
+
+| Candidate | Version checked | Decision | Rationale |
+|---|---|---|---|
+| [`michalvavra/agents` `html-tools`](https://github.com/michalvavra/agents/tree/main/archive/skills/html-tools) | `b7eab78594595ffdb58c9b00eccd1e134d4a69b8` | Adapt ideas, do not install | Useful single-file HTML utility patterns, but it targets converters/tools rather than agent work reports and overlaps with `web-artifacts-builder`. No plugin metadata found at `.codex-plugin/plugin.json` or `.claude-plugin/plugin.json`. |
+| [`Cocoon-AI/architecture-diagram-generator`](https://github.com/Cocoon-AI/architecture-diagram-generator) | `9bac8372cb63f969fd2a052e82ddc8de7c6f3f21` | Explicit-only reference | Useful architecture diagram template, but too narrow for default installation and uses external CDN assets. No plugin metadata found at `.claude-plugin/plugin.json`. |
 
 ## Import Policy
 
