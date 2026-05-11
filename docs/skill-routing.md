@@ -1,6 +1,6 @@
 # Skill Routing And De-Duplication
 
-Date: 2026-05-08
+Date: 2026-05-11
 
 This project intentionally avoids installing every famous skill pack wholesale. Prefer the narrowest skill that matches the user request.
 
@@ -16,6 +16,10 @@ This project intentionally avoids installing every famous skill pack wholesale. 
 
 | Task | Preferred skill | Secondary skill |
 |---|---|---|
+| Pressure-test a plan or design before implementation | `grill-me` | `brainstorming` for idea exploration; `product-capability` for implementation-ready planning |
+| Diagnose runtime bug, failing command, flaky behavior, or performance regression | `diagnose` | `webapp-testing` for one-off browser reproduction; `verification-loop` after the fix |
+| Diagnose agent/tool harness failure, repeated agent loop, or context drift | `agent-introspection-debugging` | `verification-loop` only after code changes |
+| Build throwaway prototype to answer one design question | `prototype` | `frontend-design` for production UI; `web-artifacts-builder` for standalone artifacts |
 | Explore or refine a feature idea | `brainstorming` | `openspec-explore` when the work should become an OpenSpec change |
 | Create a Ralph-ready PRD | `ralph-prd` | `product-capability` when implementation interfaces need deeper analysis |
 | Convert or run Ralph stories | `ralph-loop` | `verification-loop` before marking a story complete |
@@ -55,7 +59,21 @@ OpenSpec remains installed, but should be treated as an explicit formal lifecycl
 
 Use OpenSpec when the user explicitly asks for OpenSpec, a formal change proposal, or an existing `openspec/changes/<name>` workflow. The capability graph exposes this as the `openspec-formal` profile so target repos can opt in deliberately.
 
+## Matt Pocock Routing Decision
+
+The installed Matt Pocock skills are narrow lanes, not replacements for the existing ECC workflow:
+
+- `grill-me`: pre-implementation pressure testing. It stops at decisions and does not implement unless the user asks.
+- `diagnose`: product/code/runtime debugging. It starts by building a reproducible feedback loop, then uses hypotheses, probes, a fix, and regression coverage. It does not replace `agent-introspection-debugging`, which is only for agent/tool harness failures.
+- `prototype`: throwaway design learning. It answers one question with disposable logic or UI code. It does not replace `frontend-design`, `web-artifacts-builder`, or `tdd-workflow`; once a decision is made, production work returns to the normal implementation lane.
+
+These overlaps are resolved here and in root `AGENTS.md`, so no existing skill needs to be removed.
+
 ## Evaluated But Not Installed
+
+`mattpocock/skills` was evaluated on 2026-05-11. `grill-me`, `diagnose`, and `prototype` are installed because each fills a bounded workflow gap with stable routing. The local versions add Codex/source metadata, narrow trigger boundaries, and avoid default external issue-tracker side effects.
+
+Other Matt Pocock skills remain explicit-only or rejected for now: `grill-with-docs` is promising but needs a local decision on `CONTEXT.md` and ADR conventions before enabling inline doc writes; `improve-codebase-architecture` and `zoom-out` overlap existing architecture/product planning enough to wait for a dedicated architecture profile; `tdd`, `to-prd`, `to-issues`, `triage`, and `setup-matt-pocock-skills` overlap installed TDD, Ralph, OpenSpec, and issue-routing surfaces or introduce external issue-tracker side effects.
 
 `forrestchang/andrej-karpathy-skills` was evaluated on 2026-05-08. Its `karpathy-guidelines` skill repeats the four project-level principles already present in root `AGENTS.md`: think before coding, simplicity first, surgical changes, and goal-driven execution. Do not install it as a separate skill unless the root guidance is removed or the upstream project adds a materially different workflow.
 
@@ -82,3 +100,4 @@ Do not auto-install these until a user actually needs them:
 - Vercel deployment skills: external deployment and token handling.
 - React Native skills: mobile-specific context that is not part of the current repository focus.
 - Full Superpowers pack: useful but overlapping with ECC and existing workflow skills.
+- Matt Pocock `grill-with-docs`, `improve-codebase-architecture`, and `zoom-out`: useful references, but require a domain-doc or architecture profile before default installation.

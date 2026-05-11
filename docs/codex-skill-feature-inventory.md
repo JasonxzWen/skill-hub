@@ -1,6 +1,6 @@
 # Codex Skill Feature Inventory
 
-Date: 2026-05-08
+Date: 2026-05-11
 
 This document summarizes the functional surface worth adapting from famous Claude Code skill ecosystems into Codex-friendly skills.
 
@@ -12,9 +12,11 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Brainstorming | Explore intent, constraints, alternatives, and non-goals before implementation. |
 | Spec creation | Capture accepted requirements in a concise design/spec artifact. |
 | Planning | Break work into small, verifiable tasks with target files, commands, risks, and checkpoints. |
+| Plan pressure testing | Ask one high-leverage question at a time, with recommended answers, until the important decision branches are resolved. |
+| Throwaway prototyping | Build disposable logic or UI prototypes that answer one design question, then delete or absorb the result. |
 | TDD | Enforce RED-GREEN-REFACTOR: failing test first, minimal implementation, refactor after green. |
-| Code review | Review for behavior regressions, security risks, maintainability, and missing tests. |
 | Debugging | Use reproducible symptoms, hypotheses, root-cause tracing, fix verification, and regression tests. |
+| Code review | Review for behavior regressions, security risks, maintainability, and missing tests. |
 | Completion verification | Run relevant tests/checks before declaring work done. |
 | HTML work reports | Produce self-contained HTML reports, plans, reviews, research explainers, status dashboards, and lightweight editors when Markdown is too flat. |
 
@@ -36,6 +38,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Codex-ready ECC skills | 32 | `.agents/skills/` |
 | Vercel skills | 5 | `.agents/skills/` |
 | Ralph loop skills | 2 | `.agents/skills/` |
+| Matt Pocock adapted skills | 3 | `.agents/skills/` |
 | Local governance/reporting skills | 2 | `.agents/skills/` |
 | Adapted Anthropic/Claude built-ins | 20 | `.codex/skills/` |
 | Codex role configs | 3 | `.codex/agents/` |
@@ -49,7 +52,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 The first usable Codex profile should include:
 
 1. Skill dispatch and Codex tool mapping.
-2. Brainstorming, planning, TDD, debugging, review, and completion verification.
+2. Brainstorming, plan pressure testing, throwaway prototyping, planning, TDD, debugging, review, and completion verification.
 3. Git branch/worktree finishing guidance.
 4. Ralph-style repeated execution for PRD stories, when the user explicitly wants autonomous iteration.
 5. A small set of reviewer prompts: planner, code reviewer, security reviewer, build resolver.

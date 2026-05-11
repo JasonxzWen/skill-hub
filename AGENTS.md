@@ -81,6 +81,9 @@ Use `docs/skill-routing.md` to resolve overlapping skills. Prefer the narrowest 
 - Durable Playwright suites: `e2e-testing`.
 - Skill creation/update: use Codex's system `skill-creator`, not a project-local copy.
 - Ralph autonomous story loops: use `ralph-prd` to prepare PRDs and `ralph-loop` only when the user explicitly wants Ralph-style repeated execution.
+- Plan/design pressure testing: use `grill-me`; use `brainstorming` for open-ended ideation and `product-capability` for implementation-ready contracts.
+- Runtime bugs/performance regressions: use `diagnose`; use `agent-introspection-debugging` only when the agent/tool harness is failing, and `verification-loop` after the fix.
+- Throwaway design exploration: use `prototype`; use `frontend-design` for production UI, `web-artifacts-builder` for standalone artifacts, and `tdd-workflow` for production implementation.
 
 ## Third-Party Skill Evaluation
 

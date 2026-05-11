@@ -2,7 +2,7 @@
 
 Skill Hub is a curated workspace for collecting and adapting famous agent skills into Codex-friendly versions.
 
-The current target is a small, high-signal set rather than "install everything": HTML work reports, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
+The current target is a small, high-signal set rather than "install everything": plan pressure-testing, runtime diagnosis, throwaway prototyping, HTML work reports, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
 
 The CLI is written in TypeScript and built with Bun for development speed. Published npm packages keep a Node-compatible `bin/skill-hub.mjs` entrypoint that loads the generated `dist/skillHub.js`, so target users can still run `npx skill-hub ...` without installing Bun.
 
@@ -20,6 +20,8 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - Ralph is downloaded locally under `vendor/snarktank-ralph/`.
 - Ralph PRD and loop skills are installed under `.agents/skills/`, with a Codex-native runner under `scripts/ralph/`.
 - `html-work-reports` is installed under `.agents/skills/` to encourage self-contained HTML work artifacts when Markdown is too flat.
+- Matt Pocock's `skills` repository is downloaded locally under `vendor/mattpocock-skills/`.
+- Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.agents/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
 - A machine-readable capability graph exists at `capabilities/index.json`, with a human-readable map in `docs/capability-map.md`.
 - A Node CLI skeleton exists as `skill-hub`, supporting profile-based `init` and `status` reports.
 - ECC's Codex config and multi-agent roles are configured under `.codex/`.
@@ -52,6 +54,7 @@ README.md             Project overview
 | [Vercel Agent Skills](https://github.com/vercel-labs/agent-skills) | 4 selected Web/React skills | MIT per upstream README, vendored source ignored |
 | [Ralph](https://github.com/snarktank/ralph) | PRD-to-story workflow and autonomous iteration loop adapted for Codex | MIT, vendored source ignored |
 | [Karpathy-inspired guidelines](https://github.com/forrestchang/andrej-karpathy-skills) | Behavioral coding principles already embedded in root `AGENTS.md` | MIT per upstream plugin metadata/README, vendored source ignored |
+| [Matt Pocock Skills](https://github.com/mattpocock/skills) | `grill-me`, `diagnose`, and `prototype` adapted for Codex | MIT, vendored source ignored |
 | [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) | Source inspiration for `html-work-reports` | Referenced, not copied |
 
 Superpowers is tracked as an optional upstream source but is not installed by default because its core workflow overlaps heavily with ECC and the adapted built-in skills.
@@ -63,6 +66,8 @@ This hub will track Codex-ready adaptations for:
 
 - Superpowers-style disciplined software development workflows.
 - Everything Claude Code-style broad agent, rule, hook, and skill coverage.
+- One-question-at-a-time pressure testing before implementation.
+- Runtime diagnosis and disposable prototyping before production implementation.
 - Focused specialist skills for testing, security, frontend, docs, Git, browser QA, and language ecosystems.
 - Cross-harness compatibility notes for Codex App, Codex CLI, Claude Code, Cursor, OpenCode, Gemini, and similar agent hosts.
 

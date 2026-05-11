@@ -1,14 +1,17 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-05-09",
+  "generatedAt": "2026-05-11",
   "defaults": {
     "profile": "minimal",
     "agents": ["codex"]
   },
   "profiles": {
     "minimal": {
-      "description": "Low-noise daily engineering profile with HTML reports, quality, TDD, verification, security, docs lookup, and self-debugging.",
+      "description": "Low-noise daily engineering profile with plan pressure testing, runtime diagnosis, throwaway prototyping, HTML reports, quality, TDD, verification, security, docs lookup, and self-debugging.",
       "components": [
+        "skill:grill-me",
+        "skill:diagnose",
+        "skill:prototype",
         "skill:html-work-reports",
         "skill:coding-standards",
         "skill:tdd-workflow",
@@ -19,8 +22,9 @@
       ]
     },
     "web": {
-      "description": "Frontend and browser-validation profile for web UI work.",
+      "description": "Frontend, UI prototyping, and browser-validation profile for web UI work.",
       "components": [
+        "skill:prototype",
         "skill:html-work-reports",
         "skill:frontend-design",
         "skill:web-artifacts-builder",
@@ -49,6 +53,33 @@
     }
   },
   "components": {
+    "skill:grill-me": {
+      "kind": "skill",
+      "path": ".agents/skills/grill-me",
+      "version": "0.1.0",
+      "source": "mattpocock-skills-adapted",
+      "provides": ["plan-pressure-testing", "decision-tree-interview", "assumption-surfacing"],
+      "overlapsWith": ["skill:brainstorming", "skill:product-capability"],
+      "routing": "Use when the user asks to be grilled, challenged, pressure-tested, or wants assumptions surfaced before implementation."
+    },
+    "skill:diagnose": {
+      "kind": "skill",
+      "path": ".agents/skills/diagnose",
+      "version": "0.1.0",
+      "source": "mattpocock-skills-adapted",
+      "provides": ["runtime-bug-diagnosis", "feedback-loop-debugging", "hypothesis-driven-debugging", "regression-test-capture"],
+      "overlapsWith": ["skill:tdd-workflow", "skill:verification-loop", "skill:agent-introspection-debugging", "skill:webapp-testing"],
+      "routing": "Use for product, code, test, and performance failures; use agent-introspection-debugging for agent/tool failures, webapp-testing for one-off browser inspection, and verification-loop after the fix."
+    },
+    "skill:prototype": {
+      "kind": "skill",
+      "path": ".agents/skills/prototype",
+      "version": "0.1.0",
+      "source": "mattpocock-skills-adapted",
+      "provides": ["throwaway-prototyping", "logic-prototypes", "ui-variant-prototypes", "design-risk-reduction"],
+      "overlapsWith": ["skill:frontend-design", "skill:web-artifacts-builder", "skill:product-capability", "skill:tdd-workflow"],
+      "routing": "Use only for clearly marked throwaway prototypes that answer one design question; use frontend-design for production UI, web-artifacts-builder for standalone artifacts, and tdd-workflow for production implementation."
+    },
     "skill:html-work-reports": {
       "kind": "skill",
       "path": ".agents/skills/html-work-reports",

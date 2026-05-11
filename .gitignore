@@ -26,6 +26,7 @@ vendor/vercel-labs-skills/
 vendor/vercel-labs-agent-skills/
 vendor/snarktank-ralph/
 vendor/forrestchang-andrej-karpathy-skills/
+vendor/mattpocock-skills/
 
 # Ralph loop runtime state
 scripts/ralph/prd.json
