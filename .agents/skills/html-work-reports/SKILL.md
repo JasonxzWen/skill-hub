@@ -1,6 +1,6 @@
 ---
 name: html-work-reports
-description: Create self-contained HTML work artifacts for reports, plans, reviews, research explainers, status updates, incident timelines, comparisons, diagrams, dashboards, and lightweight editors. Use when a Markdown answer would flatten spatial, visual, interactive, or exportable information; do not use for tiny answers where plain text is enough.
+description: Create self-contained HTML work reports for non-trivial planning, code review, architecture walkthroughs, research synthesis, status or incident updates, and task-specific export editors. Use when the user asks for a report, plan, review, explainer, or summary that needs side-by-side comparison, filtering, timelines, diagrams, collapsible detail, or copy/export controls; avoid simple answers and normal code edits.
 ---
 
 # HTML Work Reports
@@ -11,7 +11,10 @@ Turn agent work products into one portable `.html` file when the user needs to i
 
 ## Decision Rule
 
-Prefer HTML when the output benefits from at least one of these:
+Use this skill when both are true:
+
+1. The user needs a work artifact such as a report, plan, review, explainer, status update, incident writeup, architecture walkthrough, or task-specific editor.
+2. The output benefits from at least one HTML-native affordance:
 
 - side-by-side alternatives or tradeoffs
 - tables that need filtering, sorting, or scanning
@@ -22,6 +25,25 @@ Prefer HTML when the output benefits from at least one of these:
 - small task-specific editors that export Markdown, JSON, diffs, or checklists
 
 Keep Markdown or chat when the answer is short, linear, or mainly conversational.
+
+## Trigger Examples
+
+Use this skill for requests like:
+
+- "把这次改动做成一个可以打开的 HTML 汇报"
+- "给这个 PR 做一个交互式 review 总结，按严重程度过滤"
+- "把这个模块调用链解释成一个自包含网页"
+- "给这次 incident 做时间线、影响范围和 follow-up 页面"
+- "把研究结果做成可折叠、可复制结论的 HTML 说明"
+- "做一个小页面让我调整 prompt 参数并导出 JSON"
+
+Do not use this skill for:
+
+- direct code implementation or bug fixes
+- short answers, simple explanations, or ordinary chat summaries
+- product UI or website work; use `frontend-design`
+- complex bundled React/Tailwind artifacts; use `web-artifacts-builder`
+- slide decks; use `frontend-slides`
 
 ## Artifact Types
 
