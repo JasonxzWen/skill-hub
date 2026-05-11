@@ -1,23 +1,22 @@
-import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import { expect, test } from 'bun:test';
 
 import {
   applyInstall,
   getStatus,
   planInstall,
   readCapabilityIndex,
-} from '../src/skillHub.mjs';
+} from '../src/skillHub';
 
 test('plans default install into Codex skill directory', () => {
   const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-plan-'));
   const plan = planInstall({ targetDir, profile: 'minimal', agents: ['codex'] });
 
-  assert.equal(plan.profileName, 'minimal');
-  assert.ok(plan.items.some((item) => item.componentId === 'skill:html-work-reports'));
-  assert.ok(plan.items.every((item) => item.dest.includes(`${path.sep}.agents${path.sep}skills${path.sep}`)));
+  expect(plan.profileName).toBe('minimal');
+  expect(plan.items.some((item) => item.componentId === 'skill:html-work-reports')).toBe(true);
+  expect(plan.items.every((item) => item.dest.includes(`${path.sep}.agents${path.sep}skills${path.sep}`))).toBe(true);
 });
 
 test('installs skills, writes lock, and reports current status', () => {
@@ -25,15 +24,15 @@ test('installs skills, writes lock, and reports current status', () => {
   const plan = planInstall({ targetDir, profile: 'minimal', agents: ['codex'] });
   const result = applyInstall(plan);
 
-  assert.ok(result.installed.length > 0);
-  assert.ok(fs.existsSync(path.join(targetDir, '.agents', 'skills', 'html-work-reports', 'SKILL.md')));
-  assert.ok(fs.existsSync(path.join(targetDir, '.skill-hub', 'lock.json')));
-  assert.ok(fs.existsSync(result.report));
+  expect(result.installed.length).toBeGreaterThan(0);
+  expect(fs.existsSync(path.join(targetDir, '.agents', 'skills', 'html-work-reports', 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, '.skill-hub', 'lock.json'))).toBe(true);
+  expect(fs.existsSync(result.report)).toBe(true);
 
   const status = getStatus({ targetDir, index: readCapabilityIndex() });
-  assert.equal(status.missing.length, 0);
-  assert.equal(status.updates.length, 0);
-  assert.ok(status.current.length > 0);
+  expect(status.missing.length).toBe(0);
+  expect(status.updates.length).toBe(0);
+  expect(status.current.length).toBeGreaterThan(0);
 });
 
 test('skips existing skills unless overwrite is requested', () => {
@@ -44,6 +43,6 @@ test('skips existing skills unless overwrite is requested', () => {
   const secondPlan = planInstall({ targetDir, profile: 'minimal', agents: ['codex'] });
   const secondResult = applyInstall(secondPlan);
 
-  assert.equal(secondResult.installed.length, 0);
-  assert.equal(secondResult.skipped.length, secondPlan.items.length);
+  expect(secondResult.installed.length).toBe(0);
+  expect(secondResult.skipped.length).toBe(secondPlan.items.length);
 });

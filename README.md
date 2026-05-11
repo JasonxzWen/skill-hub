@@ -4,6 +4,8 @@ Skill Hub is a curated workspace for collecting and adapting famous agent skills
 
 The current target is a small, high-signal set rather than "install everything": HTML work reports, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
 
+The CLI is written in TypeScript and built with Bun for development speed. Published npm packages keep a Node-compatible `bin/skill-hub.mjs` entrypoint that loads the generated `dist/skillHub.js`, so target users can still run `npx skill-hub ...` without installing Bun.
+
 ## Current Status
 
 - Repository initialization is in progress.
@@ -87,16 +89,28 @@ This hub will track Codex-ready adaptations for:
 
 ## Validation
 
-Run the Node tests:
+Install development dependencies with Bun:
 
 ```powershell
-npm test
+bun install
+```
+
+Run the TypeScript/Bun test suite:
+
+```powershell
+bun test ./tests
+```
+
+Build the Node-compatible CLI output:
+
+```powershell
+bun run build
 ```
 
 Run the local validator before committing:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\validate-skills.ps1
+bun run validate
 ```
 
 In the current sandbox, `openspec` may warn as not visible even though it is installed on the host. Use `-SkipExternal` to validate only repository files:

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Curated agent capability installer for Codex, Claude Code, OpenCode, and compatible skill hosts.",
   "type": "module",
+  "main": "dist/skillHub.js",
   "bin": {
     "skill-hub": "bin/skill-hub.mjs"
   },
@@ -11,8 +12,8 @@
     "README.md",
     "bin/",
     "capabilities/",
+    "dist/",
     "docs/",
-    "src/",
     ".agents/skills/",
     ".codex/agents/",
     ".codex/config.toml",
@@ -21,8 +22,11 @@
     "scripts/validate-skills.ps1"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "validate": "npm test && powershell -ExecutionPolicy Bypass -File scripts\\validate-skills.ps1 -SkipExternal"
+    "build": "bun build ./src/skillHub.ts --target=node --outdir=dist",
+    "prepack": "bun run build",
+    "test": "bun test ./tests",
+    "typecheck": "tsc --noEmit",
+    "validate": "bun run typecheck && bun test ./tests && powershell -ExecutionPolicy Bypass -File ./scripts/validate-skills.ps1 -SkipExternal"
   },
   "keywords": [
     "agent-skills",
@@ -33,6 +37,12 @@
     "skills"
   ],
   "license": "MIT",
+  "packageManager": "bun@1.3.13",
+  "devDependencies": {
+    "@types/bun": "^1.3.3",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  },
   "engines": {
     "node": ">=18"
   }

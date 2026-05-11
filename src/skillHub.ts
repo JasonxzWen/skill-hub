@@ -5,26 +5,161 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const HUB_ROOT = path.resolve(__dirname, '..');
 
+export type AgentName = 'codex' | 'opencode' | 'claude-code';
+
+export interface CapabilityProfile {
+  description: string;
+  components: string[];
+}
+
+export interface CapabilityComponent {
+  kind: 'skill' | string;
+  path: string;
+  version: string;
+  source: string;
+  provides?: string[];
+  overlapsWith?: string[];
+  routing?: string;
+}
+
+export interface CapabilityIndex {
+  version: string;
+  generatedAt: string;
+  defaults: {
+    profile: string;
+    agents: AgentName[];
+  };
+  profiles: Record<string, CapabilityProfile>;
+  components: Record<string, CapabilityComponent>;
+}
+
+export interface RepoSignals {
+  packageJson: boolean;
+  tsconfig: boolean;
+  pyproject: boolean;
+  cargo: boolean;
+  goMod: boolean;
+  codex: boolean;
+  claude: boolean;
+  agents: boolean;
+  opencode: boolean;
+}
+
+export interface InstallItem {
+  componentId: string;
+  componentVersion: string;
+  agent: AgentName;
+  kind: string;
+  source: string;
+  dest: string;
+  exists: boolean;
+}
+
+export interface SkippedInstallItem extends InstallItem {
+  reason: string;
+}
+
+export interface InstallPlan {
+  generatedAt: string;
+  hubVersion: string;
+  profileName: string;
+  profile: CapabilityProfile;
+  agents: AgentName[];
+  targetDir: string;
+  signals: RepoSignals;
+  items: InstallItem[];
+}
+
+export interface SkillHubLock {
+  schemaVersion: 1;
+  generatedAt: string;
+  hubVersion: string;
+  profile: string;
+  agents: AgentName[];
+  components: Array<{
+    id: string;
+    version: string;
+    agent: AgentName;
+    dest: string;
+    status: 'installed' | 'skipped';
+  }>;
+}
+
+export interface LockReadResult {
+  path: string;
+  data: SkillHubLock;
+}
+
+export interface InstallResult {
+  installed: InstallItem[];
+  skipped: SkippedInstallItem[];
+  lock: LockReadResult;
+  report: string;
+}
+
+export interface StatusRow {
+  id: string;
+  version: string;
+  agent: AgentName;
+  dest: string;
+  status: 'installed' | 'skipped';
+  exists: boolean;
+  latestVersion: string | null;
+}
+
+export interface SkillHubStatus {
+  targetDir: string;
+  lock: LockReadResult | null;
+  current: StatusRow[];
+  missing: StatusRow[];
+  updates: StatusRow[];
+}
+
+interface CliOptions {
+  command: string;
+  targetDir: string | null;
+  agents: AgentName[];
+  profile: string | null;
+  dryRun: boolean;
+  yes: boolean;
+  overwrite: boolean;
+  html: boolean;
+}
+
+interface PlanInstallOptions {
+  hubRoot?: string;
+  targetDir?: string;
+  index?: CapabilityIndex;
+  profile?: string | null;
+  agents?: AgentName[];
+}
+
+interface StatusOptions {
+  hubRoot?: string;
+  targetDir?: string;
+  index?: CapabilityIndex;
+}
+
 export const AGENT_SKILL_DIRS = Object.freeze({
   codex: '.agents/skills',
   opencode: '.agents/skills',
   'claude-code': '.claude/skills',
-});
+} satisfies Record<AgentName, string>);
 
-export function readCapabilityIndex(hubRoot = HUB_ROOT) {
+export function readCapabilityIndex(hubRoot = HUB_ROOT): CapabilityIndex {
   const indexPath = path.join(hubRoot, 'capabilities', 'index.json');
-  return JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+  return JSON.parse(fs.readFileSync(indexPath, 'utf8')) as CapabilityIndex;
 }
 
-export function listProfiles(index = readCapabilityIndex()) {
+export function listProfiles(index = readCapabilityIndex()): Array<{ id: string } & CapabilityProfile> {
   return Object.entries(index.profiles).map(([id, profile]) => ({ id, ...profile }));
 }
 
-export function listComponents(index = readCapabilityIndex()) {
+export function listComponents(index = readCapabilityIndex()): Array<{ id: string } & CapabilityComponent> {
   return Object.entries(index.components).map(([id, component]) => ({ id, ...component }));
 }
 
-export function detectRepoSignals(targetDir) {
+export function detectRepoSignals(targetDir: string): RepoSignals {
   const checks = {
     packageJson: 'package.json',
     tsconfig: 'tsconfig.json',
@@ -42,10 +177,10 @@ export function detectRepoSignals(targetDir) {
       key,
       fs.existsSync(path.join(targetDir, relativePath)),
     ]),
-  );
+  ) as unknown as RepoSignals;
 }
 
-export function resolveProfile(index, profileName) {
+export function resolveProfile(index: CapabilityIndex, profileName: string): CapabilityProfile {
   const profile = index.profiles[profileName];
   if (!profile) {
     throw new Error(`Unknown profile '${profileName}'. Available: ${Object.keys(index.profiles).join(', ')}`);
@@ -53,8 +188,8 @@ export function resolveProfile(index, profileName) {
   return profile;
 }
 
-export function resolveAgents(agentNames) {
-  const agents = agentNames.length > 0 ? agentNames : ['codex'];
+export function resolveAgents(agentNames: AgentName[]): AgentName[] {
+  const agents: AgentName[] = agentNames.length > 0 ? agentNames : ['codex'];
   for (const agent of agents) {
     if (!AGENT_SKILL_DIRS[agent]) {
       throw new Error(`Unsupported agent '${agent}'. Available: ${Object.keys(AGENT_SKILL_DIRS).join(', ')}`);
@@ -63,7 +198,7 @@ export function resolveAgents(agentNames) {
   return agents;
 }
 
-export function planInstall(options = {}) {
+export function planInstall(options: PlanInstallOptions = {}): InstallPlan {
   const hubRoot = options.hubRoot || HUB_ROOT;
   const targetDir = path.resolve(options.targetDir || process.cwd());
   const index = options.index || readCapabilityIndex(hubRoot);
@@ -115,7 +250,7 @@ export function planInstall(options = {}) {
   };
 }
 
-export function copyRecursive(source, dest) {
+export function copyRecursive(source: string, dest: string): void {
   const stat = fs.statSync(source);
   if (stat.isDirectory()) {
     fs.mkdirSync(dest, { recursive: true });
@@ -129,10 +264,10 @@ export function copyRecursive(source, dest) {
   fs.copyFileSync(source, dest);
 }
 
-export function applyInstall(plan, options = {}) {
+export function applyInstall(plan: InstallPlan, options: { overwrite?: boolean } = {}): InstallResult {
   const overwrite = Boolean(options.overwrite);
-  const installed = [];
-  const skipped = [];
+  const installed: InstallItem[] = [];
+  const skipped: SkippedInstallItem[] = [];
 
   for (const item of plan.items) {
     if (item.exists && !overwrite) {
@@ -149,16 +284,19 @@ export function applyInstall(plan, options = {}) {
   }
 
   const lock = writeLock(plan, { installed, skipped });
-  const report = writeHtmlReport(plan, { installed, skipped, lock });
+  const report = writeHtmlReport(plan, { installed, skipped });
 
   return { installed, skipped, lock, report };
 }
 
-export function writeLock(plan, result) {
+export function writeLock(
+  plan: InstallPlan,
+  result: Pick<InstallResult, 'installed' | 'skipped'>,
+): LockReadResult {
   const skillHubDir = path.join(plan.targetDir, '.skill-hub');
   fs.mkdirSync(skillHubDir, { recursive: true });
   const lockPath = path.join(skillHubDir, 'lock.json');
-  const lock = {
+  const lock: SkillHubLock = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     hubVersion: plan.hubVersion,
@@ -169,7 +307,7 @@ export function writeLock(plan, result) {
       version: item.componentVersion,
       agent: item.agent,
       dest: path.relative(plan.targetDir, item.dest).replaceAll(path.sep, '/'),
-      status: result.installed.includes(item) ? 'installed' : 'skipped',
+      status: 'reason' in item ? 'skipped' : 'installed',
     })),
   };
 
@@ -177,18 +315,18 @@ export function writeLock(plan, result) {
   return { path: lockPath, data: lock };
 }
 
-export function readLock(targetDir) {
+export function readLock(targetDir: string): LockReadResult | null {
   const lockPath = path.join(path.resolve(targetDir), '.skill-hub', 'lock.json');
   if (!fs.existsSync(lockPath)) {
     return null;
   }
   return {
     path: lockPath,
-    data: JSON.parse(fs.readFileSync(lockPath, 'utf8')),
+    data: JSON.parse(fs.readFileSync(lockPath, 'utf8')) as SkillHubLock,
   };
 }
 
-export function getStatus(options = {}) {
+export function getStatus(options: StatusOptions = {}): SkillHubStatus {
   const targetDir = path.resolve(options.targetDir || process.cwd());
   const index = options.index || readCapabilityIndex(options.hubRoot || HUB_ROOT);
   const lock = readLock(targetDir);
@@ -196,14 +334,14 @@ export function getStatus(options = {}) {
     return { targetDir, lock: null, current: [], missing: [], updates: [] };
   }
 
-  const current = [];
-  const missing = [];
-  const updates = [];
+  const current: StatusRow[] = [];
+  const missing: StatusRow[] = [];
+  const updates: StatusRow[] = [];
 
   for (const installed of lock.data.components) {
     const component = index.components[installed.id];
     const dest = path.join(targetDir, installed.dest);
-    const row = {
+    const row: StatusRow = {
       ...installed,
       exists: fs.existsSync(dest),
       latestVersion: component?.version || null,
@@ -221,7 +359,7 @@ export function getStatus(options = {}) {
   return { targetDir, lock, current, missing, updates };
 }
 
-export function writeStatusReport(status, hubVersion) {
+export function writeStatusReport(status: SkillHubStatus, hubVersion: string): string {
   const reportDir = path.join(status.targetDir, '.skill-hub', 'reports');
   fs.mkdirSync(reportDir, { recursive: true });
   const filePath = path.join(reportDir, `status-${timestampForFile()}.html`);
@@ -240,7 +378,10 @@ export function writeStatusReport(status, hubVersion) {
   return filePath;
 }
 
-export function writeHtmlReport(plan, result) {
+export function writeHtmlReport(
+  plan: InstallPlan,
+  result: Pick<InstallResult, 'installed' | 'skipped'>,
+): string {
   const reportDir = path.join(plan.targetDir, '.skill-hub', 'reports');
   fs.mkdirSync(reportDir, { recursive: true });
   const filePath = path.join(reportDir, `init-${timestampForFile()}.html`);
@@ -268,7 +409,17 @@ export function writeHtmlReport(plan, result) {
   return filePath;
 }
 
-function renderHtml({ title, summary, rows, hubVersion }) {
+function renderHtml({
+  title,
+  summary,
+  rows,
+  hubVersion,
+}: {
+  title: string;
+  summary: string;
+  rows: Array<Partial<StatusRow> & { id: string; state: string }>;
+  hubVersion: string;
+}): string {
   const escapedRows = rows.map((row) => `
     <tr>
       <td>${escapeHtml(row.id)}</td>
@@ -311,11 +462,11 @@ function renderHtml({ title, summary, rows, hubVersion }) {
 `;
 }
 
-function timestampForFile() {
+function timestampForFile(): string {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -323,16 +474,16 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
-function parseArgs(argv) {
-  const options = { command: argv[0] || 'help', targetDir: null, agents: [], profile: null, dryRun: false, yes: false, overwrite: false, html: false };
-  const positional = [];
+function parseArgs(argv: string[]): CliOptions {
+  const options: CliOptions = { command: argv[0] || 'help', targetDir: null, agents: [], profile: null, dryRun: false, yes: false, overwrite: false, html: false };
+  const positional: string[] = [];
 
   for (let index = 1; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--agent' || arg === '-a') {
-      options.agents.push(argv[++index]);
+      options.agents.push(parseAgentName(readOptionValue(argv, ++index, arg)));
     } else if (arg === '--profile' || arg === '-p') {
-      options.profile = argv[++index];
+      options.profile = readOptionValue(argv, ++index, arg);
     } else if (arg === '--dry-run') {
       options.dryRun = true;
     } else if (arg === '--yes' || arg === '-y') {
@@ -350,7 +501,22 @@ function parseArgs(argv) {
   return options;
 }
 
-export async function runCli(argv) {
+function readOptionValue(argv: string[], index: number, flag: string): string {
+  const value = argv[index];
+  if (!value) {
+    throw new Error(`Missing value for ${flag}`);
+  }
+  return value;
+}
+
+function parseAgentName(value: string): AgentName {
+  if (value === 'codex' || value === 'opencode' || value === 'claude-code') {
+    return value;
+  }
+  throw new Error(`Unsupported agent '${value}'. Available: ${Object.keys(AGENT_SKILL_DIRS).join(', ')}`);
+}
+
+export async function runCli(argv: string[]): Promise<void> {
   const options = parseArgs(argv);
   if (options.command === 'help' || options.command === '--help' || options.command === '-h') {
     printHelp();
@@ -372,7 +538,11 @@ export async function runCli(argv) {
   }
 
   if (options.command === 'init') {
-    const plan = planInstall(options);
+    const plan = planInstall({
+      ...options,
+      targetDir: options.targetDir || undefined,
+      profile: options.profile || undefined,
+    });
     printPlan(plan);
     if (options.dryRun) {
       return;
@@ -387,7 +557,7 @@ export async function runCli(argv) {
 
   if (options.command === 'status') {
     const index = readCapabilityIndex();
-    const status = getStatus({ targetDir: options.targetDir, index });
+    const status = getStatus({ targetDir: options.targetDir || undefined, index });
     if (!status.lock) {
       console.log('No .skill-hub/lock.json found.');
       return;
@@ -404,7 +574,7 @@ export async function runCli(argv) {
   throw new Error(`Unknown command '${options.command}'`);
 }
 
-function printPlan(plan) {
+function printPlan(plan: InstallPlan): void {
   console.log(`Target: ${plan.targetDir}`);
   console.log(`Profile: ${plan.profileName}`);
   console.log(`Agents: ${plan.agents.join(', ')}`);
