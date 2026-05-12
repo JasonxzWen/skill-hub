@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from 'bun:test';
 
 import {
+  AGENT_READINESS_CATEGORIES,
   analyzeTarget,
   applyInstall,
   getRemovePlan,
@@ -16,6 +18,10 @@ import {
   runCli,
   validateCapabilityIndex,
 } from '../src/skillHub';
+
+const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
+const AGENT_READINESS_FIXTURES = path.join(TEST_DIR, 'fixtures', 'agent-readiness');
+const READINESS_CATEGORIES = [...AGENT_READINESS_CATEGORIES];
 
 test('plans default install into Codex skill directory', () => {
   const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-plan-'));
@@ -163,6 +169,161 @@ test('analysis findings are deterministic after normalizing generated timestamp'
   const second = analyzeTarget({ targetDir, profile: 'minimal', agents: ['codex'] });
 
   expect({ ...first, generatedAt: '<timestamp>' }).toEqual({ ...second, generatedAt: '<timestamp>' });
+});
+
+test('default analysis omits agent readiness data unless requested', () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-analyze-default-shape-'));
+  const result = analyzeTarget({ targetDir, profile: 'minimal', agents: ['codex'] });
+
+  expect('agentReadiness' in result).toBe(false);
+});
+
+test('readiness analysis reports unknown states for an empty target repo', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'empty');
+  const result = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+
+  expect(result.code).toBe(0);
+  const report = JSON.parse(result.stdout);
+  expect(report.agentReadiness.categories).toEqual(READINESS_CATEGORIES);
+  expect(report.agentReadiness.findings.map((finding: { category: string }) => finding.category))
+    .toEqual(READINESS_CATEGORIES);
+  expect(report.agentReadiness.findings.every((finding: {
+    category: string;
+    id: string;
+    state: string;
+    severity: string;
+    reason: string;
+    recommendation: string;
+    evidence: unknown[];
+  }) => (
+    (READINESS_CATEGORIES as readonly string[]).includes(finding.category)
+    && finding.id.length > 0
+    && finding.state.length > 0
+    && finding.severity.length > 0
+    && finding.reason.length > 0
+    && finding.recommendation.length > 0
+    && Array.isArray(finding.evidence)
+  ))).toBe(true);
+  expect(report.agentReadiness.findings.every((finding: { state: string }) => (
+    finding.state === 'unknown' || finding.state === 'not-detected'
+  ))).toBe(true);
+});
+
+test('readiness analysis detects well-instrumented repo evidence', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'well-instrumented');
+  const result = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+
+  expect(result.code).toBe(0);
+  const report = JSON.parse(result.stdout);
+  const findings = report.agentReadiness.findings as Array<{
+    category: string;
+    id: string;
+    state: string;
+    severity: string;
+    evidence: Array<{ kind: string; value: string }>;
+  }>;
+
+  expect(findings.find((finding) => finding.category === 'context_budget')?.evidence
+    .map((item) => item.value)).toContain('AGENTS.md');
+  expect(findings.find((finding) => finding.category === 'outcomes')?.evidence
+    .map((item) => item.value)).toContain('openspec/changes/demo/tasks.md');
+  expect(findings.find((finding) => finding.category === 'verification')?.evidence
+    .map((item) => item.value)).toContain('package.json#scripts.test');
+  expect(findings.find((finding) => finding.category === 'agent_routing')?.evidence
+    .map((item) => item.value)).toContain('docs/skill-routing.md');
+  expect(findings.some((finding) => (
+    finding.category === 'automation_candidates'
+    && finding.state === 'candidate'
+    && finding.id === 'automation_candidates.ci_failure_triage'
+  ))).toBe(true);
+  expect(findings.find((finding) => finding.category === 'learning_capture')?.evidence
+    .map((item) => item.value)).toContain('CHANGELOG.md');
+});
+
+test('readiness analysis reports duplicated always-loaded context risk', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'overloaded-context');
+  const result = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+
+  expect(result.code).toBe(0);
+  const report = JSON.parse(result.stdout);
+  const contextFinding = report.agentReadiness.findings.find((finding: { id: string }) => (
+    finding.id === 'context_budget.duplicated_instruction_surfaces'
+  ));
+
+  expect(contextFinding.state).toBe('risk');
+  expect(contextFinding.severity).toBe('warning');
+  expect(contextFinding.evidence.map((item: { value: string }) => item.value)).toEqual([
+    '.agents/AGENTS.md',
+    '.codex/AGENTS.md',
+    'AGENTS.md',
+  ]);
+});
+
+test('readiness analysis gates automation candidates when verification is missing', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'verification-gap');
+  const result = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+
+  expect(result.code).toBe(0);
+  const report = JSON.parse(result.stdout);
+  const verificationFinding = report.agentReadiness.findings.find((finding: { category: string }) => (
+    finding.category === 'verification'
+  ));
+  const automationFinding = report.agentReadiness.findings.find((finding: { id: string }) => (
+    finding.id === 'automation_candidates.verification_required'
+  ));
+
+  expect(verificationFinding.state).toBe('not-detected');
+  expect(verificationFinding.severity).toBe('warning');
+  expect(automationFinding.state).toBe('not-detected');
+  expect(automationFinding.reason).toContain('manual');
+});
+
+test('readiness analysis has no target side effects', () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-readiness-side-effects-'));
+  fs.writeFileSync(path.join(targetDir, 'AGENTS.md'), 'read-only instructions\n');
+  fs.mkdirSync(path.join(targetDir, '.git'), { recursive: true });
+  fs.writeFileSync(path.join(targetDir, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+  const before = snapshotDirectory(targetDir);
+
+  const result = analyzeTarget({ targetDir, profile: 'minimal', agents: ['codex'], agentReadiness: true });
+  const after = snapshotDirectory(targetDir);
+
+  expect(result.agentReadiness?.categories).toEqual(READINESS_CATEGORIES);
+  expect(fs.existsSync(path.join(targetDir, '.skill-hub'))).toBe(false);
+  expect(after).toEqual(before);
+});
+
+test('readiness JSON output is stable after normalizing generated timestamp', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'well-instrumented');
+
+  const first = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+  const second = await captureCli(['analyze', targetDir, '--agent-readiness', '--json']);
+
+  expect(first.code).toBe(0);
+  expect(second.code).toBe(0);
+  expect(normalizeGeneratedAt(JSON.parse(first.stdout))).toEqual(normalizeGeneratedAt(JSON.parse(second.stdout)));
+});
+
+test('readiness text and html reports are opt-in and scoreless', async () => {
+  const targetDir = path.join(AGENT_READINESS_FIXTURES, 'well-instrumented');
+
+  const text = await captureCli(['analyze', targetDir, '--agent-readiness']);
+  const html = await captureCli(['analyze', targetDir, '--agent-readiness', '--html']);
+
+  expect(text.code).toBe(0);
+  expect(text.stdout).toContain('Agent readiness');
+  expect(text.stdout).not.toMatch(/\bscore\b|\d+%/i);
+  expect(html.code).toBe(0);
+  expect(html.stdout).toContain('<!doctype html>');
+  expect(html.stdout).toContain('context_budget');
+});
+
+test('readiness option is rejected outside analyze', async () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-readiness-invalid-option-'));
+  const result = await captureCli(['install', targetDir, '--agent-readiness', '--dry-run']);
+
+  expect(result.code).toBe(2);
+  expect(result.stderr).toContain('--agent-readiness');
 });
 
 test('install dry run does not copy files or write a lock', async () => {
@@ -520,4 +681,31 @@ async function captureCli(argv: string[]): Promise<{ code: number; stdout: strin
     console.log = originalLog;
     console.error = originalError;
   }
+}
+
+function normalizeGeneratedAt<T extends { generatedAt?: string }>(value: T): T {
+  return { ...value, generatedAt: '<timestamp>' };
+}
+
+function snapshotDirectory(root: string): string[] {
+  if (!fs.existsSync(root)) {
+    return [];
+  }
+
+  return listSnapshotEntries(root, root).sort();
+}
+
+function listSnapshotEntries(root: string, current: string): string[] {
+  const entries: string[] = [];
+  for (const dirent of fs.readdirSync(current, { withFileTypes: true })) {
+    const fullPath = path.join(current, dirent.name);
+    const relativePath = path.relative(root, fullPath).replaceAll(path.sep, '/');
+    if (dirent.isDirectory()) {
+      entries.push(`${relativePath}/`);
+      entries.push(...listSnapshotEntries(root, fullPath));
+    } else {
+      entries.push(`${relativePath}:${fs.readFileSync(fullPath, 'utf8')}`);
+    }
+  }
+  return entries;
 }

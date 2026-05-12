@@ -22,6 +22,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | HTML work reports | Produce self-contained HTML reports, plans, reviews, research explainers, status dashboards, and lightweight editors when Markdown is too flat. |
 | Feynman learning coach | Scope a learning target, teach from first principles, ask progressive diagnostic questions, require teach-back, and log learning events for future review. |
 | Capability lifecycle CLI | Analyze target repos, recommend missing capabilities, install managed assets, report drift, and safely remove only Skill Hub-owned files. |
+| Agent readiness analysis | Read-only `analyze` extension for context budget, outcomes, verification gates, routing boundaries, automation candidates, and reviewable learning capture. |
 
 ## P0: Codex Adaptation Layer
 
@@ -52,6 +53,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Capability graph | 1 | `capabilities/index.json` |
 | Node CLI | 1 | `bin/skill-hub.mjs` |
 | CLI lifecycle design | 1 | `docs/cli-lifecycle-design.md` |
+| Agent readiness analysis plan | 1 | `docs/agent-readiness-analysis.md` |
 
 ## Minimal Import Profile
 
@@ -66,6 +68,7 @@ The first usable Codex profile should include:
 7. Routing eval examples for high-overlap/default skills before broader description refactors.
 8. A capability graph that marks overlap, routing, source, and install profiles before copying skills into target repos.
 9. A released CLI lifecycle that can analyze, install, report status, and remove Skill Hub-managed files from other repositories.
+10. A read-only agent-readiness report that evaluates whether a target repo is ready for higher-autonomy agent workflows before installing more automation.
 
 ## Evaluated Gap Candidates
 

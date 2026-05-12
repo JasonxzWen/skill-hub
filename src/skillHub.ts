@@ -9,6 +9,41 @@ export const HUB_ROOT = path.resolve(__dirname, '..');
 export type AgentName = 'codex' | 'opencode' | 'claude-code';
 export type LifecycleRisk = 'low' | 'medium' | 'high';
 export type ReportFormat = 'text' | 'json' | 'html';
+export const AGENT_READINESS_CATEGORIES = [
+  'context_budget',
+  'outcomes',
+  'verification',
+  'agent_routing',
+  'automation_candidates',
+  'learning_capture',
+] as const;
+
+export type AgentReadinessCategory = typeof AGENT_READINESS_CATEGORIES[number];
+export type AgentReadinessState = 'detected' | 'not-detected' | 'risk' | 'candidate' | 'unknown';
+export type AgentReadinessSeverity = 'info' | 'warning';
+export type AgentReadinessEvidenceKind = 'path' | 'script' | 'signal';
+export type AgentReadinessRecommendation = string;
+
+export interface AgentReadinessEvidence {
+  kind: AgentReadinessEvidenceKind;
+  value: string;
+  detail?: string;
+}
+
+export interface AgentReadinessFinding {
+  id: string;
+  category: AgentReadinessCategory;
+  state: AgentReadinessState;
+  severity: AgentReadinessSeverity;
+  reason: string;
+  recommendation: AgentReadinessRecommendation;
+  evidence: AgentReadinessEvidence[];
+}
+
+export interface AgentReadinessReport {
+  categories: AgentReadinessCategory[];
+  findings: AgentReadinessFinding[];
+}
 
 export interface PathDetectRule {
   path: string;
@@ -77,6 +112,7 @@ export interface AnalysisResult {
   agents: AgentName[];
   signals: RepoSignals;
   findings: CapabilityFinding[];
+  agentReadiness?: AgentReadinessReport;
 }
 
 export interface ManagedFileRecord {
@@ -183,6 +219,7 @@ interface AnalyzeTargetOptions {
   index?: CapabilityIndex;
   profile?: string | null;
   agents?: AgentName[];
+  agentReadiness?: boolean;
 }
 
 export interface InstallItem {
@@ -246,6 +283,7 @@ interface CliOptions {
   json: boolean;
   output: string | null;
   force: boolean;
+  agentReadiness: boolean;
 }
 
 interface PlanInstallOptions {
@@ -458,7 +496,7 @@ export function analyzeTarget(options: AnalyzeTargetOptions = {}): AnalysisResul
     || (left.dest || '').localeCompare(right.dest || '')
   ));
 
-  return {
+  const result: AnalysisResult = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     hubVersion: index.version,
@@ -468,6 +506,12 @@ export function analyzeTarget(options: AnalyzeTargetOptions = {}): AnalysisResul
     signals: detectRepoSignals(targetDir),
     findings,
   };
+
+  if (options.agentReadiness) {
+    result.agentReadiness = analyzeAgentReadiness(targetDir);
+  }
+
+  return result;
 }
 
 function analyzeComponentForAgent(
@@ -548,6 +592,440 @@ function detectExistingCapability(
 
 function toPortablePath(value: string): string {
   return value.replaceAll(path.sep, '/').replaceAll('\\', '/');
+}
+
+const AGENT_READINESS_CATEGORY_ORDER = new Map(
+  AGENT_READINESS_CATEGORIES.map((category, index) => [category, index]),
+);
+
+const VERIFICATION_SCRIPT_NAMES = new Set([
+  'build',
+  'check',
+  'ci',
+  'e2e',
+  'lint',
+  'test',
+  'test:e2e',
+  'typecheck',
+  'validate',
+]);
+
+export function analyzeAgentReadiness(targetDirInput: string): AgentReadinessReport {
+  const targetDir = path.resolve(targetDirInput);
+  const contextEvidence = detectContextSurfaceEvidence(targetDir);
+  const outcomeEvidence = detectOutcomeEvidence(targetDir);
+  const verificationEvidence = detectVerificationEvidence(targetDir);
+  const routingEvidence = detectRoutingEvidence(targetDir);
+  const learningEvidence = detectLearningCaptureEvidence(targetDir);
+  const findings = [
+    buildContextBudgetFinding(contextEvidence),
+    buildOutcomeFinding(outcomeEvidence),
+    buildVerificationFinding(verificationEvidence),
+    buildRoutingFinding(routingEvidence),
+    ...buildAutomationCandidateFindings(targetDir, verificationEvidence, outcomeEvidence),
+    buildLearningCaptureFinding(learningEvidence),
+  ].sort(sortReadinessFindings);
+
+  return {
+    categories: [...AGENT_READINESS_CATEGORIES],
+    findings,
+  };
+}
+
+function buildContextBudgetFinding(evidence: AgentReadinessEvidence[]): AgentReadinessFinding {
+  if (evidence.length === 0) {
+    return makeReadinessFinding({
+      id: 'context_budget.no_context_surfaces',
+      category: 'context_budget',
+      state: 'unknown',
+      severity: 'info',
+      reason: 'No recognized agent instruction surface was detected.',
+      recommendation: 'Add one explicit repo instruction surface before increasing agent autonomy.',
+      evidence,
+    });
+  }
+
+  if (evidence.length > 1) {
+    return makeReadinessFinding({
+      id: 'context_budget.duplicated_instruction_surfaces',
+      category: 'context_budget',
+      state: 'risk',
+      severity: 'warning',
+      reason: 'Multiple always-loaded instruction surfaces may duplicate context for the same work.',
+      recommendation: 'Consolidate shared guidance and keep agent-specific files narrow.',
+      evidence,
+    });
+  }
+
+  return makeReadinessFinding({
+    id: 'context_budget.context_surfaces',
+    category: 'context_budget',
+    state: 'detected',
+    severity: 'info',
+    reason: 'A recognized agent instruction surface was detected.',
+    recommendation: 'Keep always-loaded instructions short and move conditional guidance into skills or docs.',
+    evidence,
+  });
+}
+
+function buildOutcomeFinding(evidence: AgentReadinessEvidence[]): AgentReadinessFinding {
+  if (evidence.length === 0) {
+    return makeReadinessFinding({
+      id: 'outcomes.no_outcome_artifacts',
+      category: 'outcomes',
+      state: 'not-detected',
+      severity: 'warning',
+      reason: 'No explicit success criteria, OpenSpec tasks, PR template, or Definition of Done artifact was detected.',
+      recommendation: 'Add reviewable success criteria before delegating broader autonomous work.',
+      evidence,
+    });
+  }
+
+  return makeReadinessFinding({
+    id: 'outcomes.outcome_artifacts',
+    category: 'outcomes',
+    state: 'detected',
+    severity: 'info',
+    reason: 'Outcome-like artifacts are available for agents to work toward.',
+    recommendation: 'Keep acceptance criteria close to the work item and update them as scope changes.',
+    evidence,
+  });
+}
+
+function buildVerificationFinding(evidence: AgentReadinessEvidence[]): AgentReadinessFinding {
+  if (evidence.length === 0) {
+    return makeReadinessFinding({
+      id: 'verification.no_verification_gates',
+      category: 'verification',
+      state: 'not-detected',
+      severity: 'warning',
+      reason: 'No package script, test directory, CI config, or known validation path was detected.',
+      recommendation: 'Add at least one reproducible verification command before routine or multi-agent execution.',
+      evidence,
+    });
+  }
+
+  return makeReadinessFinding({
+    id: 'verification.verification_gates',
+    category: 'verification',
+    state: 'detected',
+    severity: 'info',
+    reason: 'Verification gates are discoverable from scripts or project files.',
+    recommendation: 'Document which checks are required before declaring agent work complete.',
+    evidence,
+  });
+}
+
+function buildRoutingFinding(evidence: AgentReadinessEvidence[]): AgentReadinessFinding {
+  if (evidence.length === 0) {
+    return makeReadinessFinding({
+      id: 'agent_routing.no_routing_assets',
+      category: 'agent_routing',
+      state: 'not-detected',
+      severity: 'warning',
+      reason: 'No skill routing docs, agent roles, OpenSpec changes, or Ralph stories were detected.',
+      recommendation: 'Start with one or two narrow agent workflows before broad autonomous execution.',
+      evidence,
+    });
+  }
+
+  return makeReadinessFinding({
+    id: 'agent_routing.routing_assets',
+    category: 'agent_routing',
+    state: 'detected',
+    severity: 'info',
+    reason: 'Routing assets exist for decomposing work into narrower responsibilities.',
+    recommendation: 'Use routing docs to keep implementation, review, and verification responsibilities separate.',
+    evidence,
+  });
+}
+
+function buildAutomationCandidateFindings(
+  targetDir: string,
+  verificationEvidence: AgentReadinessEvidence[],
+  outcomeEvidence: AgentReadinessEvidence[],
+): AgentReadinessFinding[] {
+  if (verificationEvidence.length === 0) {
+    return [
+      makeReadinessFinding({
+        id: 'automation_candidates.verification_required',
+        category: 'automation_candidates',
+        state: 'not-detected',
+        severity: 'warning',
+        reason: 'Routine-style execution should remain manual until a checkable verification gate exists.',
+        recommendation: 'Add a repeatable test, lint, typecheck, build, or validate gate before creating routines.',
+        evidence: [],
+      }),
+    ];
+  }
+
+  const findings: AgentReadinessFinding[] = [];
+  const ciEvidence = verificationEvidence.filter((item) => item.kind === 'path' && item.value.startsWith('.github/workflows'));
+  if (ciEvidence.length > 0) {
+    findings.push(makeReadinessFinding({
+      id: 'automation_candidates.ci_failure_triage',
+      category: 'automation_candidates',
+      state: 'candidate',
+      severity: 'info',
+      reason: 'CI workflow files create a reviewable candidate for read-only failure triage.',
+      recommendation: 'Consider a read-only CI failure triage routine that summarizes failing checks and likely owners.',
+      evidence: ciEvidence,
+    }));
+  }
+
+  const validationEvidence = verificationEvidence.filter((item) => (
+    item.kind === 'script'
+    && /#scripts\.(build|check|ci|e2e|lint|test|test:e2e|typecheck|validate)$/.test(item.value)
+  ));
+  if (validationEvidence.length > 0) {
+    findings.push(makeReadinessFinding({
+      id: 'automation_candidates.nightly_validation',
+      category: 'automation_candidates',
+      state: 'candidate',
+      severity: 'info',
+      reason: 'Reusable verification scripts create a candidate for scheduled validation reports.',
+      recommendation: 'Consider a read-only nightly validation routine that reports command results without changing files.',
+      evidence: validationEvidence,
+    }));
+  }
+
+  const reviewEvidence = outcomeEvidence.filter((item) => (
+    item.value.includes('pull_request_template')
+    || item.value.toLowerCase().includes('definition-of-done')
+  ));
+  if (reviewEvidence.length > 0) {
+    findings.push(makeReadinessFinding({
+      id: 'automation_candidates.review_preparation',
+      category: 'automation_candidates',
+      state: 'candidate',
+      severity: 'info',
+      reason: 'Review and Definition of Done artifacts can guide read-only review preparation.',
+      recommendation: 'Consider a pre-review routine that checks changed work against the documented criteria.',
+      evidence: reviewEvidence,
+    }));
+  }
+
+  if (safeRelativePathExists(targetDir, 'docs')) {
+    findings.push(makeReadinessFinding({
+      id: 'automation_candidates.docs_freshness',
+      category: 'automation_candidates',
+      state: 'candidate',
+      severity: 'info',
+      reason: 'A docs directory creates a candidate for read-only documentation freshness checks.',
+      recommendation: 'Consider a routine that reports stale docs and missing source references for human review.',
+      evidence: [{ kind: 'path', value: 'docs' }],
+    }));
+  }
+
+  if (findings.length === 0) {
+    findings.push(makeReadinessFinding({
+      id: 'automation_candidates.manual_candidates',
+      category: 'automation_candidates',
+      state: 'candidate',
+      severity: 'info',
+      reason: 'Verification exists, but no CI, review, or docs routine candidate was detected.',
+      recommendation: 'Keep routine candidates as reviewable plans until a concrete recurring workflow is chosen.',
+      evidence: verificationEvidence,
+    }));
+  }
+
+  return findings;
+}
+
+function buildLearningCaptureFinding(evidence: AgentReadinessEvidence[]): AgentReadinessFinding {
+  if (evidence.length === 0) {
+    return makeReadinessFinding({
+      id: 'learning_capture.no_capture_location',
+      category: 'learning_capture',
+      state: 'unknown',
+      severity: 'info',
+      reason: 'No durable docs, changelog, retrospective, or skill location was detected for lessons learned.',
+      recommendation: 'Choose a reviewable repo location for lessons before relying on external memory.',
+      evidence,
+    });
+  }
+
+  return makeReadinessFinding({
+    id: 'learning_capture.capture_locations',
+    category: 'learning_capture',
+    state: 'detected',
+    severity: 'info',
+    reason: 'Durable repo locations exist for reviewable learning capture.',
+    recommendation: 'Capture lessons as docs, changelog entries, skill gotchas, or memory-note proposals after review.',
+    evidence,
+  });
+}
+
+function detectContextSurfaceEvidence(targetDir: string): AgentReadinessEvidence[] {
+  const evidence: AgentReadinessEvidence[] = [];
+  pushPathEvidenceIfExists(targetDir, evidence, 'AGENTS.md');
+
+  for (const root of ['.codex', '.agents', '.claude', '.opencode']) {
+    const instructionFiles = root === '.claude'
+      ? ['.claude/CLAUDE.md', '.claude/AGENTS.md']
+      : [`${root}/AGENTS.md`];
+    const existingInstruction = instructionFiles.find((relativePath) => safeRelativePathExists(targetDir, relativePath));
+    if (existingInstruction) {
+      evidence.push({ kind: 'path', value: existingInstruction });
+    } else {
+      pushPathEvidenceIfExists(targetDir, evidence, root);
+    }
+  }
+
+  return sortEvidence(evidence);
+}
+
+function detectOutcomeEvidence(targetDir: string): AgentReadinessEvidence[] {
+  const evidence = evidenceForExistingPaths(targetDir, [
+    '.github/pull_request_template.md',
+    'PULL_REQUEST_TEMPLATE.md',
+    'RELEASE_CHECKLIST.md',
+    'docs/acceptance-criteria.md',
+    'docs/definition-of-done.md',
+    'docs/Definition-of-Done.md',
+    'docs/release-checklist.md',
+    'scripts/ralph/prd.json',
+  ]);
+
+  evidence.push(...findRelativeFiles(targetDir, 'openspec/changes')
+    .filter((relativePath) => path.posix.basename(relativePath) === 'tasks.md')
+    .map((value) => ({ kind: 'path' as const, value })));
+
+  return sortEvidence(evidence);
+}
+
+function detectVerificationEvidence(targetDir: string): AgentReadinessEvidence[] {
+  const evidence = [
+    ...detectPackageScriptEvidence(targetDir),
+    ...evidenceForExistingPaths(targetDir, [
+      '.github/workflows',
+      'Makefile',
+      'biome.json',
+      'e2e',
+      'eslint.config.js',
+      'jest.config.js',
+      'playwright.config.ts',
+      'scripts/validate-skills.ps1',
+      'scripts/validate.ts',
+      'test',
+      'tests',
+      'tsconfig.json',
+      'vitest.config.ts',
+    ]),
+  ];
+
+  return sortEvidence(evidence);
+}
+
+function detectRoutingEvidence(targetDir: string): AgentReadinessEvidence[] {
+  return sortEvidence([
+    ...evidenceForExistingPaths(targetDir, [
+      '.agents/AGENTS.md',
+      '.agents/skills',
+      '.claude/agents',
+      '.codex/agents',
+      '.codex/skills',
+      '.opencode',
+      'docs/skill-routing.md',
+      'openspec/changes',
+      'scripts/ralph',
+      'scripts/ralph/prd.json',
+    ]),
+  ]);
+}
+
+function detectLearningCaptureEvidence(targetDir: string): AgentReadinessEvidence[] {
+  return evidenceForExistingPaths(targetDir, [
+    '.agents/skills',
+    '.codex/skills',
+    'CHANGELOG.md',
+    'changelog.md',
+    'docs',
+    'docs/lessons-learned.md',
+    'docs/retrospective.md',
+    'docs/skill-quality-guide.md',
+  ]);
+}
+
+function detectPackageScriptEvidence(targetDir: string): AgentReadinessEvidence[] {
+  const packagePath = path.join(targetDir, 'package.json');
+  if (!fs.existsSync(packagePath)) {
+    return [];
+  }
+
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8')) as {
+      scripts?: Record<string, unknown>;
+    };
+    return Object.entries(packageJson.scripts || {})
+      .filter(([name, command]) => VERIFICATION_SCRIPT_NAMES.has(name) && typeof command === 'string')
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, command]) => ({
+        kind: 'script' as const,
+        value: `package.json#scripts.${name}`,
+        detail: command as string,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function evidenceForExistingPaths(targetDir: string, relativePaths: string[]): AgentReadinessEvidence[] {
+  const evidence: AgentReadinessEvidence[] = [];
+  for (const relativePath of relativePaths) {
+    pushPathEvidenceIfExists(targetDir, evidence, relativePath);
+  }
+  return sortEvidence(evidence);
+}
+
+function pushPathEvidenceIfExists(
+  targetDir: string,
+  evidence: AgentReadinessEvidence[],
+  relativePath: string,
+): void {
+  if (safeRelativePathExists(targetDir, relativePath)) {
+    evidence.push({ kind: 'path', value: normalizePortablePath(relativePath) });
+  }
+}
+
+function findRelativeFiles(targetDir: string, rootRelativePath: string): string[] {
+  if (!safeRelativePathExists(targetDir, rootRelativePath)) {
+    return [];
+  }
+
+  const rootPath = assertSafeRelativePath(targetDir, rootRelativePath);
+  return listFilesRecursive(rootPath)
+    .map((filePath) => toPortablePath(path.relative(targetDir, filePath)))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function makeReadinessFinding(input: AgentReadinessFinding): AgentReadinessFinding {
+  return {
+    ...input,
+    evidence: sortEvidence(input.evidence),
+  };
+}
+
+function sortEvidence(evidence: AgentReadinessEvidence[]): AgentReadinessEvidence[] {
+  const byKey = new Map<string, AgentReadinessEvidence>();
+  for (const item of evidence) {
+    byKey.set(`${item.kind}\0${item.value}\0${item.detail || ''}`, item);
+  }
+
+  return [...byKey.values()].sort((left, right) => (
+    left.value.localeCompare(right.value)
+    || left.kind.localeCompare(right.kind)
+    || (left.detail || '').localeCompare(right.detail || '')
+  ));
+}
+
+function sortReadinessFindings(left: AgentReadinessFinding, right: AgentReadinessFinding): number {
+  return (
+    (AGENT_READINESS_CATEGORY_ORDER.get(left.category) || 0)
+    - (AGENT_READINESS_CATEGORY_ORDER.get(right.category) || 0)
+    || left.id.localeCompare(right.id)
+    || left.recommendation.localeCompare(right.recommendation)
+  );
 }
 
 export function planInstall(options: PlanInstallOptions = {}): InstallPlan {
@@ -1189,6 +1667,7 @@ function parseArgs(argv: string[]): CliOptions {
     json: false,
     output: null,
     force: false,
+    agentReadiness: false,
   };
   const positional: string[] = [];
 
@@ -1212,6 +1691,8 @@ function parseArgs(argv: string[]): CliOptions {
       options.output = readOptionValue(argv, ++index, arg);
     } else if (arg === '--force') {
       options.force = true;
+    } else if (arg === '--agent-readiness') {
+      options.agentReadiness = true;
     } else if (arg.startsWith('-')) {
       throw new CliError(`Unsupported option '${arg}'`, 2);
     } else {
@@ -1260,6 +1741,10 @@ async function runCliInner(argv: string[]): Promise<number> {
     return 0;
   }
 
+  if (options.agentReadiness && options.command !== 'analyze') {
+    throw new CliError(`Unsupported option '--agent-readiness' for command '${options.command}'`, 2);
+  }
+
   if (options.command === 'profiles') {
     for (const profile of listProfiles()) {
       console.log(`${profile.id}\t${profile.description}`);
@@ -1279,6 +1764,7 @@ async function runCliInner(argv: string[]): Promise<number> {
       targetDir: options.targetDir || undefined,
       profile: options.profile || undefined,
       agents: options.agents,
+      agentReadiness: options.agentReadiness,
     });
     emitReport(renderLifecycleReport('Skill Hub Analysis Report', analysis, options), options);
     return 0;
@@ -1369,6 +1855,17 @@ function rowsForLifecycleData(
   data: AnalysisResult | InstallPlan | InstallResult | SkillHubStatus | RemoveResult | UpdatePlan,
 ): HtmlRow[] {
   if ('findings' in data) {
+    if (data.agentReadiness) {
+      return data.agentReadiness.findings.map((finding) => ({
+        id: finding.id,
+        agent: finding.category,
+        dest: finding.evidence.map((item) => item.value).join(', '),
+        state: finding.state,
+        version: finding.severity,
+        latestVersion: finding.recommendation,
+      }));
+    }
+
     return data.findings.map((finding) => ({
       id: finding.componentId,
       agent: finding.agent,
@@ -1429,6 +1926,10 @@ function summaryForLifecycleData(
   data: AnalysisResult | InstallPlan | InstallResult | SkillHubStatus | RemoveResult | UpdatePlan,
 ): string {
   if ('findings' in data) {
+    if (data.agentReadiness) {
+      return summaryForReadinessAnalysis(data);
+    }
+
     const recommended = data.findings.filter((finding) => finding.state === 'recommended').length;
     const detected = data.findings.filter((finding) => finding.state === 'detected').length;
     const conflicts = data.findings.filter((finding) => finding.state === 'conflict').length;
@@ -1458,6 +1959,28 @@ function summaryForLifecycleData(
   return `${data.updates.length} updates, ${data.blockers.length} blockers.`;
 }
 
+function summaryForReadinessAnalysis(data: AnalysisResult): string {
+  const recommended = data.findings.filter((finding) => finding.state === 'recommended').length;
+  const detected = data.findings.filter((finding) => finding.state === 'detected').length;
+  const conflicts = data.findings.filter((finding) => finding.state === 'conflict').length;
+  const readiness = data.agentReadiness;
+  if (!readiness) {
+    return `${recommended} recommended, ${detected} detected, ${conflicts} conflicts.`;
+  }
+
+  const warnings = readiness.findings.filter((finding) => finding.severity === 'warning');
+  const topFindings = (warnings.length > 0 ? warnings : readiness.findings)
+    .slice(0, 3)
+    .map((finding) => `- ${finding.category}: ${finding.reason} Recommendation: ${finding.recommendation}`)
+    .join('\n');
+
+  return [
+    `${recommended} recommended, ${detected} detected, ${conflicts} conflicts.`,
+    `Agent readiness: ${warnings.length} warnings across ${readiness.categories.length} categories.`,
+    topFindings,
+  ].filter(Boolean).join('\n');
+}
+
 function emitReport(content: string, options: CliOptions): void {
   if (options.output) {
     const outputPath = path.resolve(options.output);
@@ -1483,7 +2006,7 @@ function printHelp() {
   console.log(`skill-hub
 
 Usage:
-  skill-hub analyze [target] [--profile minimal] [--agent codex] [--json|--html] [--output file]
+  skill-hub analyze [target] [--profile minimal] [--agent codex] [--agent-readiness] [--json|--html] [--output file]
   skill-hub install [target] [--profile minimal] [--agent codex] [--dry-run|--yes] [--overwrite] [--json|--html] [--output file]
   skill-hub init [target] [--profile minimal] [--agent codex] [--dry-run|--yes] [--overwrite] [--json|--html] [--output file]
   skill-hub status [target] [--json|--html] [--output file]
