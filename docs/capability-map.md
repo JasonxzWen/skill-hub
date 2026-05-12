@@ -58,6 +58,7 @@ The release-oriented command model is documented in [CLI lifecycle design](cli-l
 | Command | Side effect | Contract |
 |---|---|---|
 | `skill-hub analyze` | Read-only by default | Detect repo signals, existing capabilities, missing capabilities, recommendations, and conflicts from explicit capability metadata. |
+| `skill-hub analyze --agent-readiness` | Read-only extension | Report target-repo readiness for higher-autonomy agent work: context budget, outcomes, verification, routing, automation candidates, and learning capture. |
 | `skill-hub install` | Mutating | Resolve a profile, copy selected components, write `.skill-hub/lock.json`, and create an install report. |
 | `skill-hub init` | Mutating alias | Compatibility alias for `install` during migration. |
 | `skill-hub status` | Read-only by default | Read `.skill-hub/lock.json` and report current, missing, modified, update-available, skipped, and unknown managed components. |
@@ -87,3 +88,16 @@ Initial detection is path-based only. V1 detect rules use exact repository-relat
 The lock file is the ownership boundary for future status, update, and removal. Deletion must be lock-backed and hash-aware; same-name unmanaged files are never removed by loose path matching.
 
 Future component kinds can add hooks, rules, MCP config snippets, and harness-specific config files without changing the profile model.
+
+## Agent Readiness Analysis
+
+The archived OpenSpec change `add-agent-readiness-analysis` defines a read-only extension to `skill-hub analyze`. It does not add install behavior. It evaluates whether a target repo has the scaffolding needed for higher-autonomy agent workflows:
+
+- context-budget hygiene;
+- explicit outcome or Definition of Done artifacts;
+- verification gates such as tests, lint, typecheck, build, validation, or CI;
+- agent-routing boundaries through skills, roles, OpenSpec, Ralph stories, or routing docs;
+- reviewable automation candidates;
+- reviewable learning-capture locations.
+
+See [Agent readiness analysis plan](agent-readiness-analysis.md) for rationale and source references.

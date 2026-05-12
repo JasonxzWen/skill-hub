@@ -24,6 +24,10 @@ The CLI should answer four questions:
 3. Which files did Skill Hub install and how have they drifted?
 4. How can Skill Hub remove only the files it owns?
 
+The archived OpenSpec change `add-agent-readiness-analysis` adds a fifth read-only question:
+
+5. Is this target repo ready for higher-autonomy agent work?
+
 ## Command Contract
 
 | Command | Side effect | Purpose |
@@ -83,6 +87,29 @@ Every recommendation should include:
 - default action: install, skip, conflict, or already-present.
 
 The CLI should prefer "unknown" over false certainty. If a repo has custom skills that do not match known detection rules, the report can mark them as existing agent assets without claiming semantic equivalence.
+
+## Agent Readiness Analysis
+
+The `add-agent-readiness-analysis` change extends `analyze` with an opt-in `--agent-readiness` report. It is a read-only planning layer, not an installer. It should not create `.skill-hub/`, write target files, write memory, create schedules, create webhooks, commit, push, open PRs, or modify third-party services.
+
+The report categories are:
+
+| Category | What it checks |
+|---|---|
+| `context_budget` | Always-loaded instruction surfaces such as `AGENTS.md`, `.codex/`, `.agents/`, `.claude/`, and `.opencode/`, plus duplicated context risks. |
+| `outcomes` | Explicit success criteria such as OpenSpec tasks, Ralph PRDs, PR templates, release checklists, and Definition of Done docs. |
+| `verification` | Test, lint, typecheck, build, validation, CI, browser, and release gates. |
+| `agent_routing` | Evidence that work can be decomposed through skills, roles, routines, OpenSpec changes, Ralph stories, or routing docs. |
+| `automation_candidates` | Candidate recurring checks or routines, reported as reviewable plans only. |
+| `learning_capture` | Reviewable locations where durable lessons can be proposed, such as docs, skill gotchas, changelogs, retrospectives, or memory-note proposals. |
+
+This design is intentionally derived from source material rather than copied prompt text:
+
+- Code with Claude 2026 opening keynote: https://www.youtube.com/watch?v=GMIWm5y90xA
+- Claude Managed Agents announcement: https://claude.com/blog/new-in-claude-managed-agents
+- Anthropic Managed Agents architecture note: https://www.anthropic.com/engineering/managed-agents
+- Reiner Pope / Dwarkesh Patel transcript gist: https://gist.github.com/dwarkeshsp/79100f0fdeed69d76241903bb0604dbe
+- Reiner Pope video: https://www.youtube.com/watch?v=xmkSf5IS-zw
 
 ## Capability Index Migration
 
@@ -366,6 +393,12 @@ It should not include ignored vendor checkouts.
 - Validate Node-only execution from `dist/`.
 - Run a local package smoke test from `npm pack`.
 - Update package docs and release notes.
+
+### Phase 6: Agent readiness analysis
+
+- Keep the `add-agent-readiness-analysis` implementation opt-in and read-only.
+- Maintain deterministic fixtures for context-budget, outcomes, verification, routing, automation-candidate, and learning-capture findings.
+- Defer mutating template installs, routine exports, and memory updates to later OpenSpec changes.
 
 ## Acceptance Criteria
 

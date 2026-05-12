@@ -1,0 +1,9 @@
+{
+  "title": "Demo story",
+  "stories": [
+    {
+      "id": "demo-1",
+      "goal": "Verify routed execution"
+    }
+  ]
+}

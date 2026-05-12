@@ -26,6 +26,7 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - `feynman-learning-coach` is installed under `.agents/skills/` as an explicit learning profile inspired by Learn FASTER's scoped learning lifecycle.
 - A machine-readable capability graph exists at `capabilities/index.json`, with a human-readable map in `docs/capability-map.md`.
 - A Node CLI skeleton exists as `skill-hub`, supporting profile-based `init` and `status` reports.
+- An opt-in agent-readiness analysis extension is documented in `docs/agent-readiness-analysis.md` and specified by `openspec/specs/agent-readiness-analysis/spec.md`.
 - ECC's Codex config and multi-agent roles are configured under `.codex/`.
 - Claude Code built-in skills copied into `.codex/skills/` have been adapted for Codex; the duplicate local `skill-creator` copy was removed in favor of Codex's system skill.
 - Initial Codex feature inventory is documented in `docs/`.
@@ -93,6 +94,7 @@ This hub will track Codex-ready adaptations for:
 
 - [Capability map](docs/capability-map.md)
 - [CLI lifecycle design](docs/cli-lifecycle-design.md)
+- [Agent readiness analysis](docs/agent-readiness-analysis.md)
 - [Codex skill feature inventory](docs/codex-skill-feature-inventory.md)
 - [Claude built-in skills Codex adaptation](docs/codex-builtins-adaptation.md)
 - [Everything Claude Code local setup](docs/ecc-local-setup.md)
@@ -140,13 +142,14 @@ powershell -ExecutionPolicy Bypass -File scripts\validate-skills.ps1 -SkipExtern
 ## Next Milestones
 
 1. Implement the `release-cli-capability-lifecycle` OpenSpec change: read-only analysis, install alias migration, lock-backed status, safe removal, and package smoke testing.
-2. Keep the non-failing skill quality inventory report stable enough for review, then decide whether a checked-in baseline is worth maintaining.
-3. Expand routing eval fixtures beyond the initial high-overlap set before broader description refactors.
-4. Expand `capabilities/index.json` with detection metadata, recommendation text, supported agents, and lifecycle risk markers.
-5. Exercise `skill-hub analyze/install/status/remove` against disposable target repos for Codex, Claude Code, and OpenCode.
-6. Verify MCP startup from a non-sandboxed Codex shell with credentials available before recommending MCP-bearing profiles.
-7. Test the Ralph runner on a small disposable repo before using it on high-value branches.
-8. Keep source/license notes current whenever a third-party skill is added or refreshed.
+2. Exercise `skill-hub analyze --agent-readiness` against disposable target repos for Codex, Claude Code, and OpenCode.
+3. Keep the non-failing skill quality inventory report stable enough for review, then decide whether a checked-in baseline is worth maintaining.
+4. Expand routing eval fixtures beyond the initial high-overlap set before broader description refactors.
+5. Expand `capabilities/index.json` with detection metadata, recommendation text, supported agents, and lifecycle risk markers.
+6. Exercise `skill-hub analyze/install/status/remove` against disposable target repos for Codex, Claude Code, and OpenCode.
+7. Verify MCP startup from a non-sandboxed Codex shell with credentials available before recommending MCP-bearing profiles.
+8. Test the Ralph runner on a small disposable repo before using it on high-value branches.
+9. Keep source/license notes current whenever a third-party skill is added or refreshed.
 
 ## CLI Preview
 
@@ -162,3 +165,11 @@ npx skill-hub remove D:\path\to\target --dry-run --json
 ```
 
 `analyze`, `status`, and first-release `update --dry-run` are read-only by default. `install` and `remove` mutate the target repo and must be backed by `.skill-hub/lock.json`. During migration, `init` remains a compatibility alias for `install`.
+
+Agent readiness analysis:
+
+```powershell
+npx skill-hub analyze D:\path\to\target --agent-readiness --json
+```
+
+The readiness report remains read-only and evaluates context budget, outcome criteria, verification gates, routing boundaries, automation candidates, and reviewable learning capture.
