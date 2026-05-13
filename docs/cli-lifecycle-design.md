@@ -2,7 +2,7 @@
 
 Date: 2026-05-11
 
-This document is the migration design for turning Skill Hub from a local installer skeleton into a released CLI that other repositories can use safely.
+This document is the lifecycle design for turning Skill Hub into a released CLI that other repositories can use safely.
 
 The archived OpenSpec change is `openspec/changes/archive/2026-05-12-release-cli-capability-lifecycle/`. The active specs are under `openspec/specs/`.
 
@@ -53,8 +53,8 @@ First release command decisions:
 
 | Option | Commands | Contract |
 |---|---|---|
-| `--profile <name>` | `analyze`, `install`, `init`, `update --dry-run` | Selects a capability profile. Defaults to `capabilities.index.defaults.profile`. |
-| `--agent <name>` | `analyze`, `install`, `init`, `update --dry-run` | May be repeated. Defaults to `capabilities.index.defaults.agents`. |
+| `--profile <name>` | `analyze`, `install`, `init` | Selects a capability profile. Defaults to `capabilities.index.defaults.profile`. |
+| `--agent <name>` | `analyze`, `install`, `init` | May be repeated. Defaults to `capabilities.index.defaults.agents`. |
 | `--json` | `analyze`, `install`, `init`, `status`, `update --dry-run`, `remove` | Prints the stable JSON report to stdout. |
 | `--html` | `analyze`, `install`, `init`, `status`, `update --dry-run`, `remove` | Prints HTML to stdout unless `--output` is provided. |
 | `--output <file>` | reporting commands | Writes the selected report format to an explicit path. Parent directories may be created. |
@@ -84,7 +84,7 @@ Every recommendation should include:
 - planned destination path;
 - reason;
 - evidence, when available;
-- default action: install, skip, conflict, or already-present.
+- default action: install, skip, none, or overwrite-required.
 
 The CLI should prefer "unknown" over false certainty. If a repo has custom skills that do not match known detection rules, the report can mark them as existing agent assets without claiming semantic equivalence.
 
@@ -178,7 +178,7 @@ export interface CapabilityFinding {
   capability: string;
   componentId: string;
   agent: AgentName;
-  state: 'detected' | 'recommended' | 'conflict' | 'already-managed' | 'unknown';
+  state: 'detected' | 'recommended' | 'conflict' | 'unknown';
   evidence: string[];
   reason: string;
   defaultAction: 'none' | 'install' | 'skip' | 'overwrite-required';
@@ -341,10 +341,17 @@ Report output rules:
 Before publishing, maintainers should be able to run:
 
 ```powershell
+bun run validate:release
+```
+
+The release validation wraps the lower-level checks:
+
+```powershell
 bun run typecheck
 bun test ./tests
 powershell -ExecutionPolicy Bypass -File scripts\validate-skills.ps1 -SkipExternal
 bun run build
+node bin\skill-hub.mjs --help
 npm pack
 ```
 
@@ -355,6 +362,7 @@ The packed artifact should include:
 - `capabilities/index.json`;
 - installable `.agents/skills/`, `.codex/skills/`, `.codex/agents/`, and `.codex/config.toml` assets that are referenced by profiles;
 - docs needed for user-facing reports and package context;
+- `openspec/` specs and archived change records for source traceability;
 - `scripts/ralph/` and `scripts/validate-skills.ps1` when they are referenced by installable components or validation docs.
 
 It should not include ignored vendor checkouts.

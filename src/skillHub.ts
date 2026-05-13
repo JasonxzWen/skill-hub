@@ -96,7 +96,7 @@ export interface CapabilityFinding {
   capability: string;
   componentId: string;
   agent: AgentName;
-  state: 'detected' | 'recommended' | 'conflict' | 'already-managed' | 'unknown';
+  state: 'detected' | 'recommended' | 'conflict' | 'unknown';
   evidence: string[];
   reason: string;
   defaultAction: 'none' | 'install' | 'skip' | 'overwrite-required';
