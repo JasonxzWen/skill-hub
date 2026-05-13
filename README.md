@@ -8,9 +8,9 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 
 ## Current Status
 
-- Repository initialization is in progress.
+- Core lifecycle CLI behavior is implemented and under release hardening.
 - OpenSpec scaffolding exists under `openspec/`.
-- Project-local OpenSpec helper skills exist under `.codex/skills/`.
+- Project-local Codex skills, including OpenSpec helpers and adapted built-ins, exist under `.codex/skills/`.
 - Everything Claude Code is downloaded locally under `vendor/everything-claude-code/`.
 - ECC's Codex skill surface has been imported under `.agents/skills/`.
 - Vercel Labs `skills` is downloaded locally under `vendor/vercel-labs-skills/`.
@@ -25,20 +25,21 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - EveryInc's `compound-engineering-plugin` repository is downloaded locally under `vendor/EveryInc-compound-engineering-plugin/`; only its `ce-code-review` workflow has been adapted as `.agents/skills/compound-code-review/`.
 - `feynman-learning-coach` is installed under `.agents/skills/` as an explicit learning profile inspired by Learn FASTER's scoped learning lifecycle.
 - A machine-readable capability graph exists at `capabilities/index.json`, with a human-readable map in `docs/capability-map.md`.
-- A Node CLI skeleton exists as `skill-hub`, supporting profile-based `init` and `status` reports.
+- A Node-compatible CLI exists as `skill-hub`, supporting profile-based `analyze`, `install`, `init`, `status`, `update --dry-run`, and `remove` reports.
 - An opt-in agent-readiness analysis extension is documented in `docs/agent-readiness-analysis.md` and specified by `openspec/specs/agent-readiness-analysis/spec.md`.
 - ECC's Codex config and multi-agent roles are configured under `.codex/`.
 - Claude Code built-in skills copied into `.codex/skills/` have been adapted for Codex; the duplicate local `skill-creator` copy was removed in favor of Codex's system skill.
 - Initial Codex feature inventory is documented in `docs/`.
+- Skill quality inventory is available as a report-only gate; existing warnings are tracked but are not yet release blockers.
 
 ## Repository Layout
 
 ```text
-.codex/skills/        Project-local Codex skills for OpenSpec workflows
+.codex/skills/        Codex-local skills: OpenSpec helpers and adapted built-ins
 .codex/agents/        ECC Codex multi-agent role configs
-.agents/skills/       ECC Codex-ready skills
+.agents/skills/       Cross-agent skill assets from ECC, Vercel, Ralph, local, and adapted sources
 capabilities/         Machine-readable capability graph and install profiles
-openspec/             Spec-driven planning workspace
+openspec/             Maintainer specs and archived change records for source traceability
 docs/                 Research notes, feature inventory, and source map
 bin/, src/, tests/    Node CLI entrypoint, implementation, and tests
 scripts/              Local validation helpers
@@ -133,6 +134,14 @@ Run the local validator before committing:
 bun run validate
 ```
 
+Run the release validation before publishing or cutting a CLI lifecycle release:
+
+```powershell
+bun run validate:release
+```
+
+This runs the normal validation gate, rebuilds the Node-compatible `dist/` entrypoint, smoke-tests `bin/skill-hub.mjs`, and checks the npm pack file list.
+
 In the current sandbox, `openspec` may warn as not visible even though it is installed on the host. Use `-SkipExternal` to validate only repository files:
 
 ```powershell
@@ -141,7 +150,7 @@ powershell -ExecutionPolicy Bypass -File scripts\validate-skills.ps1 -SkipExtern
 
 ## Next Milestones
 
-1. Implement the `release-cli-capability-lifecycle` OpenSpec change: read-only analysis, install alias migration, lock-backed status, safe removal, and package smoke testing.
+1. Keep the archived `release-cli-capability-lifecycle` specs current as CLI behavior evolves.
 2. Exercise `skill-hub analyze --agent-readiness` against disposable target repos for Codex, Claude Code, and OpenCode.
 3. Keep the non-failing skill quality inventory report stable enough for review, then decide whether a checked-in baseline is worth maintaining.
 4. Expand routing eval fixtures beyond the initial high-overlap set before broader description refactors.

@@ -14,6 +14,7 @@
     "capabilities/",
     "dist/",
     "docs/",
+    "openspec/",
     ".agents/skills/",
     ".codex/agents/",
     ".codex/config.toml",
@@ -28,7 +29,8 @@
     "test": "bun test ./tests",
     "skill:quality-inventory": "bun ./scripts/skill-quality-inventory.ts",
     "typecheck": "tsc --noEmit",
-    "validate": "bun run typecheck && bun test ./tests && powershell -ExecutionPolicy Bypass -File ./scripts/validate-skills.ps1 -SkipExternal"
+    "validate": "bun run typecheck && bun test ./tests && powershell -ExecutionPolicy Bypass -File ./scripts/validate-skills.ps1 -SkipExternal",
+    "validate:release": "bun run validate && bun run build && node bin/skill-hub.mjs --help && npm pack --dry-run"
   },
   "keywords": [
     "agent-skills",
