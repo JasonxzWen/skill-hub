@@ -429,16 +429,20 @@
       "version": "0.1.0",
       "source": "local",
       "provides": [
+        "completed-task-html-handoffs",
         "self-contained-html-reports",
         "interactive-work-artifacts",
-        "html-change-reports"
+        "html-change-reports",
+        "visual-code-evidence-reports",
+        "generated-report-artifacts",
+        "validated-report-artifacts"
       ],
       "overlapsWith": [
         "skill:web-artifacts-builder",
         "skill:frontend-slides",
         "skill:frontend-design"
       ],
-      "routing": "Load for self-contained HTML reports, reviews, plans, status updates, research explainers, architecture walkthroughs, and lightweight export editors when Markdown is too flat; use frontend-design, web-artifacts-builder, or frontend-slides for UI apps and decks.",
+      "routing": "Load for non-trivial completed-task conclusions and generated, validated self-contained HTML reports, reviews, plans, status dashboards, research explainers, architecture walkthroughs, and lightweight export editors; skip permission pauses, simple chat answers, UI apps, decks, and bundled artifacts.",
       "detects": [
         {
           "path": ".agents/skills/html-work-reports/SKILL.md",
@@ -463,7 +467,7 @@
         "claude-code"
       ],
       "risk": "low",
-      "recommendation": "Create self-contained HTML reports for non-trivial reviews, plans, status updates, research explainers, architecture walkthroughs, or lightweight export editors."
+      "recommendation": "Create visual self-contained HTML handoffs for non-trivial completed-task conclusions, reviews, plans, status dashboards, research explainers, architecture walkthroughs, or lightweight export editors."
     },
     "skill:compound-code-review": {
       "kind": "skill",

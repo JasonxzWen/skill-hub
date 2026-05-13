@@ -19,7 +19,7 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - Selected Vercel web skills are installed under `.agents/skills/`.
 - Ralph is downloaded locally under `vendor/snarktank-ralph/`.
 - Ralph PRD and loop skills are installed under `.agents/skills/`, with a Codex-native runner under `scripts/ralph/`.
-- `html-work-reports` is installed under `.agents/skills/` to encourage self-contained HTML work artifacts when Markdown is too flat.
+- `html-work-reports` is installed under `.agents/skills/` to generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions and work artifacts.
 - Matt Pocock's `skills` repository is downloaded locally under `vendor/mattpocock-skills/`.
 - Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.agents/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
 - EveryInc's `compound-engineering-plugin` repository is downloaded locally under `vendor/EveryInc-compound-engineering-plugin/`; only its `ce-code-review` workflow has been adapted as `.agents/skills/compound-code-review/`.

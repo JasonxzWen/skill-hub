@@ -25,7 +25,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 - Use `diagnose` for runtime bugs, failing commands, flaky behavior, and performance regressions; use `agent-introspection-debugging` only for agent/tool harness failures.
 - Use `prototype` for explicitly throwaway logic or UI experiments that answer one design question; return to `tdd-workflow` for production implementation.
 - Use `compound-code-review` for deep pre-PR or Compound Engineering-style code review with structured findings and routing.
-- Use `html-work-reports` for non-trivial plans, reviews, research, status reports, and explainers where a self-contained HTML artifact is more useful than Markdown.
+- Use `html-work-reports` for non-trivial completed-task conclusions, plans, reviews, research, status reports, and explainers where a generated, validated, self-contained visual HTML artifact is more useful than Markdown.
 - Use `feynman-learning-coach` only for explicit learning or tutoring sessions, not for ordinary implementation or quick factual lookup.
 - Use the `harness` profile when the task is to scaffold a target repo's agent operating environment, not when the user only needs a read-only readiness report.
 - Use `web-artifacts-builder` only when the HTML artifact needs a bundled React/Tailwind/shadcn app.
