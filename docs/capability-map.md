@@ -13,6 +13,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 | `openspec-formal` | Formal OpenSpec change proposal, apply, and archive lifecycle. | Explicit only; use when the user asks for OpenSpec or formal change artifacts. |
 | `ralph` | Ralph PRD and loop helpers. | Explicit only; use when the user wants Ralph-style repeated execution. |
 | `learning` | Feynman-style teaching, progressive diagnostic questions, teach-back checks, and learning logs. | Explicit only; use when the user wants to learn or study a topic. |
+| `harness` | Root `AGENTS.md` plus state, verification, handoff, and quality templates under `harness/`. | Explicit setup profile for repos that need an agent harness environment. |
 
 ## Routing Principles
 
@@ -26,6 +27,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 - Use `compound-code-review` for deep pre-PR or Compound Engineering-style code review with structured findings and routing.
 - Use `html-work-reports` for non-trivial plans, reviews, research, status reports, and explainers where a self-contained HTML artifact is more useful than Markdown.
 - Use `feynman-learning-coach` only for explicit learning or tutoring sessions, not for ordinary implementation or quick factual lookup.
+- Use the `harness` profile when the task is to scaffold a target repo's agent operating environment, not when the user only needs a read-only readiness report.
 - Use `web-artifacts-builder` only when the HTML artifact needs a bundled React/Tailwind/shadcn app.
 - Use `frontend-slides` for decks.
 - Keep OpenSpec as an explicit formal lifecycle, not the default planning lane.
@@ -88,6 +90,8 @@ Initial detection is path-based only. V1 detect rules use exact repository-relat
 The lock file is the ownership boundary for future status, update, and removal. Deletion must be lock-backed and hash-aware; same-name unmanaged files are never removed by loose path matching.
 
 Future component kinds can add hooks, rules, MCP config snippets, and harness-specific config files without changing the profile model.
+
+`harness-template` components are the first non-skill installable kind. Each one must declare an explicit repository-relative `targetPath`; root `AGENTS.md` is allowed because agent hosts discover it there, while every other harness file should install under `harness/` to keep target repos tidy.
 
 ## Agent Readiness Analysis
 

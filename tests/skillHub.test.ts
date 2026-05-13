@@ -35,6 +35,61 @@ test('plans default install into Codex skill directory', () => {
   expect(plan.items.every((item) => item.dest.includes(`${path.sep}.agents${path.sep}skills${path.sep}`))).toBe(true);
 });
 
+test('plans harness environment files outside skill directories', () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-harness-plan-'));
+  const plan = planInstall({ targetDir, profile: 'harness', agents: ['codex'] });
+  const plannedDests = plan.items.map((item) => path.relative(targetDir, item.dest).replaceAll(path.sep, '/'));
+
+  expect(plan.profileName).toBe('harness');
+  expect(plan.items.some((item) => item.componentId === 'harness:agents-md')).toBe(true);
+  expect(plannedDests).toContain('AGENTS.md');
+  expect(plannedDests).toContain('harness/feature_list.json');
+  expect(plannedDests).toContain('harness/init.sh');
+  expect(plannedDests.every((dest) => dest === 'AGENTS.md' || dest.startsWith('harness/'))).toBe(true);
+  expect(plannedDests.every((dest) => !dest.startsWith('.agents/'))).toBe(true);
+});
+
+test('installs harness environment files with lock-backed status', () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-harness-install-'));
+  const plan = planInstall({ targetDir, profile: 'harness', agents: ['codex'] });
+  const result = applyInstall(plan);
+
+  expect(result.installed.length).toBe(plan.items.length);
+  expect(fs.existsSync(path.join(targetDir, 'AGENTS.md'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, 'harness', 'README.md'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, 'harness', 'feature_list.json'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, 'harness', 'init.sh'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, '.agents'))).toBe(false);
+  expect(result.lock.data.schemaVersion).toBe(2);
+  if (result.lock.data.schemaVersion !== 2) {
+    throw new Error('expected schema version 2 lock');
+  }
+  expect(result.lock.data.components.some((component) => component.id === 'harness:agents-md')).toBe(true);
+  expect(result.lock.data.components.flatMap((component) => component.files.map((file) => file.path)))
+    .toEqual(expect.arrayContaining(['AGENTS.md', 'harness/feature_list.json', 'harness/init.sh']));
+
+  const status = getStatus({ targetDir, index: readCapabilityIndex() });
+  expect(status.current.length).toBe(plan.items.length);
+  expect(status.missing.length).toBe(0);
+  expect(status.modified.length).toBe(0);
+});
+
+test('harness planning skips existing target files instead of overwriting them', () => {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-harness-skip-'));
+  fs.writeFileSync(path.join(targetDir, 'AGENTS.md'), 'local instructions\n');
+  fs.mkdirSync(path.join(targetDir, 'harness'), { recursive: true });
+  fs.writeFileSync(path.join(targetDir, 'harness', 'feature_list.json'), '{}\n');
+
+  const plan = planInstall({ targetDir, profile: 'harness', agents: ['codex'] });
+  const agentsItem = plan.items.find((item) => item.componentId === 'harness:agents-md');
+  const featureListItem = plan.items.find((item) => item.componentId === 'harness:feature-list');
+  const initItem = plan.items.find((item) => item.componentId === 'harness:init-script');
+
+  expect(agentsItem?.exists).toBe(true);
+  expect(featureListItem?.exists).toBe(true);
+  expect(initItem?.exists).toBe(false);
+});
+
 test('installs skills, writes lock, and reports current status', () => {
   const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-hub-install-'));
   const plan = planInstall({ targetDir, profile: 'minimal', agents: ['codex'] });

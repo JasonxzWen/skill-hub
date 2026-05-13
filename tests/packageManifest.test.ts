@@ -11,5 +11,6 @@ test('package manifest keeps release validation and source traceability explicit
   expect(packageJson.scripts['validate:release']).toContain('bun run build');
   expect(packageJson.scripts['validate:release']).toContain('node bin/skill-hub.mjs --help');
   expect(packageJson.scripts['validate:release']).toContain('npm pack --dry-run');
+  expect(packageJson.files).toContain('harness/');
   expect(packageJson.files).toContain('openspec/');
 });
