@@ -85,6 +85,12 @@ OpenSpec remains installed, but should be treated as an explicit formal lifecycl
 
 Use OpenSpec when the user explicitly asks for OpenSpec, a formal change proposal, or an existing `openspec/changes/<name>` workflow. The capability graph exposes this as the `openspec-formal` profile so target repos can opt in deliberately.
 
+## Harness Environment Profile
+
+Learn Harness Engineering was evaluated on 2026-05-13 as a source for target-repo harness scaffolding. Do not install the upstream `harness-creator` skill by default: its broad trigger surface overlaps `agent-introspection-debugging`, `verification-loop`, `product-capability`, and local lifecycle docs.
+
+The installed exception is the explicit `harness` profile in `capabilities/index.json`. It copies root `AGENTS.md` plus compact state, verification, handoff, evaluator, and quality templates under `harness/` for target repositories. Use it only when the user asks to scaffold or build a target repo's harness environment; use `skill-hub analyze --agent-readiness` for read-only readiness checks.
+
 ## Matt Pocock Routing Decision
 
 The installed Matt Pocock skills are narrow lanes, not replacements for the existing ECC workflow:

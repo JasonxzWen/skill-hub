@@ -58,6 +58,7 @@ export interface CapabilityProfile {
 export interface CapabilityComponent {
   kind: 'skill' | 'config' | 'script' | 'rule' | 'hook' | 'mcp' | string;
   path: string;
+  targetPath?: string;
   version: string;
   source: string;
   provides: string[];
@@ -380,6 +381,37 @@ export function validateCapabilityIndex(index: CapabilityIndex): string[] {
     if (!component.recommendation || component.recommendation.trim().length === 0) {
       errors.push(`${id}: missing recommendation`);
     }
+
+    if (component.kind === 'harness-template') {
+      if (!component.targetPath || component.targetPath.trim().length === 0) {
+        errors.push(`${id}: missing targetPath`);
+      } else {
+        errors.push(...validateTargetPath(id, component.targetPath));
+      }
+    }
+  }
+
+  return errors;
+}
+
+function validateTargetPath(componentId: string, targetPath: string): string[] {
+  const errors: string[] = [];
+  const normalized = normalizePortablePath(targetPath);
+
+  if (!normalized || normalized === '.') {
+    errors.push(`${componentId}: empty target path`);
+  }
+
+  if (isAbsolutePortablePath(normalized)) {
+    errors.push(`${componentId}: absolute target path '${targetPath}'`);
+  }
+
+  if (normalized.split('/').includes('..')) {
+    errors.push(`${componentId}: traversal target path '${targetPath}'`);
+  }
+
+  if (GLOB_CHARS.test(normalized)) {
+    errors.push(`${componentId}: glob target path '${targetPath}'`);
   }
 
   return errors;
@@ -476,15 +508,11 @@ export function analyzeTarget(options: AnalyzeTargetOptions = {}): AnalysisResul
       throw new Error(`Profile '${profileName}' references missing component '${componentId}'`);
     }
 
-    if (component.kind !== 'skill') {
+    if (!isInstallableComponent(component)) {
       continue;
     }
 
-    for (const agent of agents) {
-      if (component.agents.length > 0 && !component.agents.includes(agent)) {
-        continue;
-      }
-
+    for (const agent of installAgentsForComponent(component, agents)) {
       findings.push(analyzeComponentForAgent(targetDir, componentId, component, agent));
     }
   }
@@ -520,8 +548,7 @@ function analyzeComponentForAgent(
   component: CapabilityComponent,
   agent: AgentName,
 ): CapabilityFinding {
-  const skillName = path.basename(component.path);
-  const dest = toPortablePath(path.join(AGENT_SKILL_DIRS[agent], skillName));
+  const dest = resolveComponentDest(component, agent);
   const evidence = detectExistingCapability(targetDir, component, agent);
   const capability = component.provides[0] || componentId;
   const reason = component.recommendation || component.routing || `Adds ${capability}.`;
@@ -562,6 +589,32 @@ function analyzeComponentForAgent(
     defaultAction: 'install',
     dest,
   };
+}
+
+function isInstallableComponent(component: CapabilityComponent): boolean {
+  return component.kind === 'skill' || component.kind === 'harness-template';
+}
+
+function installAgentsForComponent(component: CapabilityComponent, agents: AgentName[]): AgentName[] {
+  const supportedAgents = agents.filter((agent) => component.agents.includes(agent));
+
+  if (component.kind === 'harness-template') {
+    return supportedAgents.slice(0, 1);
+  }
+
+  return supportedAgents;
+}
+
+function resolveComponentDest(component: CapabilityComponent, agent: AgentName): string {
+  if (component.kind === 'harness-template') {
+    if (!component.targetPath) {
+      throw new Error(`Harness template '${component.path}' is missing targetPath.`);
+    }
+    return normalizePortablePath(component.targetPath);
+  }
+
+  const skillName = path.basename(component.path);
+  return toPortablePath(path.join(AGENT_SKILL_DIRS[agent], skillName));
 }
 
 function detectExistingCapability(
@@ -1046,7 +1099,7 @@ export function planInstall(options: PlanInstallOptions = {}): InstallPlan {
 
   const items = [];
   for (const component of components) {
-    if (component.kind !== 'skill') {
+    if (!isInstallableComponent(component)) {
       continue;
     }
 
@@ -1055,8 +1108,8 @@ export function planInstall(options: PlanInstallOptions = {}): InstallPlan {
       throw new Error(`Component source does not exist: ${component.path}`);
     }
 
-    for (const agent of agents) {
-      const dest = path.join(targetDir, AGENT_SKILL_DIRS[agent], path.basename(component.path));
+    for (const agent of installAgentsForComponent(component, agents)) {
+      const dest = assertSafeRelativePath(targetDir, resolveComponentDest(component, agent));
       const finding = analysis.findings.find((item) => item.componentId === component.id && item.agent === agent);
       items.push({
         componentId: component.id,

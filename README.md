@@ -2,7 +2,7 @@
 
 Skill Hub is a curated workspace for collecting and adapting famous agent skills into Codex-friendly versions.
 
-The current target is a small, high-signal set rather than "install everything": plan pressure-testing, runtime diagnosis, throwaway prototyping, structured code review, HTML work reports, optional Feynman-style learning coaching, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
+The current target is a small, high-signal set rather than "install everything": plan pressure-testing, runtime diagnosis, throwaway prototyping, structured code review, HTML work reports, optional Feynman-style learning coaching, harness environment templates, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
 
 The CLI is written in TypeScript and built with Bun for development speed. Published npm packages keep a Node-compatible `bin/skill-hub.mjs` entrypoint that loads the generated `dist/skillHub.js`, so target users can still run `npx skill-hub ...` without installing Bun.
 
@@ -24,6 +24,7 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.agents/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
 - EveryInc's `compound-engineering-plugin` repository is downloaded locally under `vendor/EveryInc-compound-engineering-plugin/`; only its `ce-code-review` workflow has been adapted as `.agents/skills/compound-code-review/`.
 - `feynman-learning-coach` is installed under `.agents/skills/` as an explicit learning profile inspired by Learn FASTER's scoped learning lifecycle.
+- A `harness` install profile can scaffold root `AGENTS.md` plus state, verification, handoff, and quality templates under `harness/` for target repos.
 - A machine-readable capability graph exists at `capabilities/index.json`, with a human-readable map in `docs/capability-map.md`.
 - A Node-compatible CLI exists as `skill-hub`, supporting profile-based `analyze`, `install`, `init`, `status`, `update --dry-run`, and `remove` reports.
 - An opt-in agent-readiness analysis extension is documented in `docs/agent-readiness-analysis.md` and specified by `openspec/specs/agent-readiness-analysis/spec.md`.
@@ -39,6 +40,7 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 .codex/agents/        ECC Codex multi-agent role configs
 .agents/skills/       Cross-agent skill assets from ECC, Vercel, Ralph, local, and adapted sources
 capabilities/         Machine-readable capability graph and install profiles
+harness/              Installable harness environment templates for target repos
 openspec/             Maintainer specs and archived change records for source traceability
 docs/                 Research notes, feature inventory, and source map
 bin/, src/, tests/    Node CLI entrypoint, implementation, and tests
@@ -61,12 +63,14 @@ README.md             Project overview
 | [Matt Pocock Skills](https://github.com/mattpocock/skills) | `grill-me`, `diagnose`, and `prototype` adapted for Codex | MIT, vendored source ignored |
 | [Compound Engineering Plugin](https://github.com/EveryInc/compound-engineering-plugin) | `compound-code-review` adapted from `ce-code-review` only | MIT, vendored source ignored |
 | [Learn FASTER](https://github.com/hluaguo/learn-faster-kit) | Source inspiration for `feynman-learning-coach`; no CLI/runtime copied | MIT, referenced at evaluated commit |
+| [Learn Harness Engineering](https://github.com/walkinglabs/learn-harness-engineering) | Source inspiration for the `harness` environment profile and templates | MIT, adapted from the course and Chinese template library |
 | [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) | Source inspiration for `html-work-reports` | Referenced, not copied |
 
 Superpowers is tracked as an optional upstream source but is not installed by default because its core workflow overlaps heavily with ECC and the adapted built-in skills.
 The Karpathy-inspired skill is not installed as a separate trigger because its core guidance is already project-level instruction in `AGENTS.md`.
 Compound Engineering is tracked as an optional upstream source, but only the code-review lane is installed. The rest of the plugin remains explicit-only because it overlaps this hub or requires external actions and credentials.
 Learn FASTER is tracked as a learning-coach source. Only the lightweight Feynman teaching and logging pattern is installed; its CLI, generated root instructions, and full `.learning` runtime are not copied.
+Learn Harness Engineering is tracked as a harness environment source. The local adaptation installs a root `AGENTS.md` plus compact `harness/` templates instead of copying the course repository or skill wholesale.
 
 ## Initial Scope
 
@@ -78,6 +82,7 @@ This hub will track Codex-ready adaptations for:
 - Runtime diagnosis and disposable prototyping before production implementation.
 - Structured multi-perspective code review before PR readiness.
 - Explicit Feynman-style tutoring with teach-back checks and durable learning logs.
+- Installable harness environment scaffolding for agent instructions, state, verification, scope, lifecycle, and handoff.
 - Focused specialist skills for testing, security, frontend, docs, Git, browser QA, and language ecosystems.
 - Cross-harness compatibility notes for Codex App, Codex CLI, Claude Code, Cursor, OpenCode, Gemini, and similar agent hosts.
 
@@ -166,6 +171,7 @@ powershell -ExecutionPolicy Bypass -File scripts\validate-skills.ps1 -SkipExtern
 npx skill-hub analyze D:\path\to\target --json
 npx skill-hub analyze D:\path\to\target --html --output D:\tmp\skill-hub-analysis.html
 npx skill-hub install D:\path\to\target --profile minimal --agent codex --dry-run
+npx skill-hub install D:\path\to\target --profile harness --agent codex --dry-run
 npx skill-hub install D:\path\to\target --profile learning --agent codex --dry-run
 npx skill-hub install D:\path\to\target --profile web --agent codex --agent claude-code --yes
 npx skill-hub status D:\path\to\target --html
