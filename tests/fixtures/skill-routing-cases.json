@@ -103,7 +103,15 @@
       "kind": "positive",
       "prompt": "Create a one-file HTML work report for this PR review with collapsible findings and copyable action items.",
       "expectedSkill": "html-work-reports",
-      "docsBoundary": "`html-work-reports` loads for self-contained work artifacts where HTML navigation or export controls beat Markdown."
+      "docsBoundary": "`html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+    },
+    {
+      "id": "html-work-reports-positive-completed-conclusion",
+      "skill": "html-work-reports",
+      "kind": "positive",
+      "prompt": "The implementation is complete; create a visual handoff with the conclusion, changed files, highlighted code, verification, and next actions.",
+      "expectedSkill": "html-work-reports",
+      "docsBoundary": "`html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
     },
     {
       "id": "html-work-reports-negative-product-page",
@@ -111,7 +119,7 @@
       "kind": "negative",
       "prompt": "Build a branded product landing page as the first screen of the app.",
       "expectedSkill": "frontend-design",
-      "docsBoundary": "`html-work-reports` loads for self-contained work artifacts where HTML navigation or export controls beat Markdown."
+      "docsBoundary": "`html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
     },
     {
       "id": "html-work-reports-forbidden-short-answer",
@@ -119,7 +127,15 @@
       "kind": "forbidden-load",
       "prompt": "Summarize the command output in two sentences.",
       "expectedSkill": null,
-      "docsBoundary": "`html-work-reports` loads for self-contained work artifacts where HTML navigation or export controls beat Markdown."
+      "docsBoundary": "`html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+    },
+    {
+      "id": "html-work-reports-forbidden-permission-pause",
+      "skill": "html-work-reports",
+      "kind": "forbidden-load",
+      "prompt": "Before pushing this branch, stop and ask me for approval.",
+      "expectedSkill": null,
+      "docsBoundary": "`html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
     },
     {
       "id": "compound-code-review-positive-deep-review",

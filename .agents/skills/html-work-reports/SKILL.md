@@ -1,95 +1,92 @@
 ---
 name: html-work-reports
-description: Load when the user needs a self-contained HTML report, review, plan, status update, research explainer, architecture walkthrough, or lightweight export editor; do not load for simple chat answers, normal code edits, production UI, slide decks, or bundled web apps.
+description: Load when a non-trivial task has a complete conclusion needing a self-contained HTML report, review, plan, status dashboard, research explainer, architecture walkthrough, or lightweight export editor; do not load for permission pauses, simple chat answers, production UI, slide decks, or bundled web apps.
 ---
 
 # HTML Work Reports
 
 ## Overview
 
-Turn agent work products into one portable `.html` file when the user needs to inspect, compare, navigate, present, or edit the result. The goal is a local artifact that opens directly in a browser and makes the work easier to use than a long Markdown document.
+Turn completed agent work into one portable `.html` file when the handoff needs visual scanning, rendered rich content, evidence, or export controls. This is for the conclusion boundary, not permission pauses.
 
 ## Decision Rule
 
-Use this skill when both are true:
+Use this skill when:
 
-1. The user needs a work artifact such as a report, plan, review, explainer, status update, incident writeup, architecture walkthrough, or task-specific editor.
-2. The output benefits from at least one HTML-native affordance:
+- A non-trivial task has a complete conclusion with findings, tradeoffs, file/code evidence, diagrams, metrics, timelines, or next actions.
+- The user asks for a report, review, plan, status update, research explainer, architecture walkthrough, dashboard, or lightweight editor.
+- The answer would otherwise become a long Markdown wall, raw Mermaid block, raw table, or unrendered code dump.
 
-- side-by-side alternatives or tradeoffs
-- tables that need filtering, sorting, or scanning
-- timelines, dependency maps, module maps, diagrams, or call flows
-- code review annotations, severity tags, or jump links
-- collapsible explainers, tabs, glossaries, or progressive disclosure
-- status reports, incident reports, or recurring updates
-- small task-specific editors that export Markdown, JSON, diffs, or checklists
+Skip this skill for:
 
-Keep Markdown or chat when the answer is short, linear, or mainly conversational.
+- permission pauses before publishing, pushing, spending money, installing, changing credentials, or mutating third-party resources
+- short answers, one-command summaries, tiny fixes, or ordinary chat
+- implementation/debugging while work is still in progress
+- product UI, websites, apps, decks, or bundled React/Tailwind artifacts
 
 ## Trigger Examples
 
 Use this skill for requests like:
 
-- "把这次改动做成一个可以打开的 HTML 汇报"
-- "给这个 PR 做一个交互式 review 总结，按严重程度过滤"
-- "把这个模块调用链解释成一个自包含网页"
-- "给这次 incident 做时间线、影响范围和 follow-up 页面"
-- "把研究结果做成可折叠、可复制结论的 HTML 说明"
-- "做一个小页面让我调整 prompt 参数并导出 JSON"
+- "Turn the completed implementation summary into a visual HTML report with file evidence."
+- "Create an interactive PR review report with severity filters and highlighted snippets."
+- "Explain this module call path as a self-contained page with a rendered diagram."
+- "Build an incident timeline page with impact, logs, and follow-up status."
+- "Convert the research result into a skimmable HTML explainer with citations."
+- "Make a small prompt/config editor that exports JSON or Markdown."
 
 Do not use this skill for:
 
-- direct code implementation or bug fixes
+- approval gates such as "ask before pushing" or "confirm before installing"
+- code implementation, bug fixes, or test runs while work is still in progress
 - short answers, simple explanations, or ordinary chat summaries
 - product UI or website work; use `frontend-design`
 - complex bundled React/Tailwind artifacts; use `web-artifacts-builder`
 - slide decks; use `frontend-slides`
 
-## Artifact Types
+## Output Contract
 
-Use the narrowest artifact that fits:
+Every artifact should be one self-contained `.html` file under `reports/` unless the repo has a better convention. Pair it with a short chat handoff that links the file and names verification performed.
 
-- **Planning**: milestones, risk table, architecture sketch, task checklist.
-- **Code review**: annotated diff, changed-file tour, findings by severity, reviewer focus areas.
-- **Understanding**: module map, request path, dependency graph, entry points.
-- **Design**: token swatches, component contact sheet, variant/state matrix.
-- **Prototype**: single interaction, animation sandbox, click-through flow.
-- **Research**: TL;DR box, tabs for examples, collapsible sections, glossary.
-- **Report**: status summary, timeline, small chart, follow-up checklist.
-- **Editor**: focused interface for triage, feature flags, prompts, ordering, or config changes.
+Build with visual blocks, tables, timelines, diagrams, cards, code panels, and chips instead of long paragraphs. Keep keyboard access, narrow width readability, and `prefers-reduced-motion`.
 
-## Build Rules
+## Generator First Workflow
 
-1. Produce one self-contained `.html` file with inline CSS and JS.
-2. Default to no network dependencies. If a CDN library is materially useful, pin the version and explain why.
-3. Use semantic HTML, accessible controls, readable contrast, and keyboard-friendly interactions.
-4. Put an executive summary or TL;DR at the top.
-5. Preserve evidence: include source paths, commands, dates, and assumptions where relevant.
-6. Add copy/export controls when the user needs to feed the result back into an agent or commit it.
-7. Keep styling purposeful and restrained for engineering reports. Avoid decorative excess.
-8. Save generated work artifacts under `reports/` unless the user or repo already has a better convention.
+Prefer the internal generator:
 
-## Minimum Structure
+1. Write a JSON input that follows `references/report-input-schema.json`.
+2. Run `scripts/create-report.mjs --input <input.json> --out-dir reports --slug <name> --json`.
+3. Run `scripts/validate-html-report.mjs reports/<name>.html --json`.
+4. Hand off the report link and the verification result.
 
-Every report artifact should include:
+Use hand-written HTML only for custom visual exceptions. Reuse `assets/components/` and run the validator.
 
-- title and generated timestamp
-- short summary
-- navigation for major sections
-- the main visual or interactive workspace
-- evidence and assumptions
-- next actions or export output
+## Template Assets
 
-For editor artifacts, include an explicit export area or button. The exported text should be directly usable as Markdown, JSON, a patch summary, or a task list.
+Start from the closest template when it fits:
+
+- `assets/templates/implementation-handoff.html`: changed areas, evidence, verification gates, risks, and next actions.
+- `assets/templates/conclusion-dashboard.html`: completed task handoffs, release readiness, implementation summaries, verification reports.
+- `assets/templates/review-findings.html`: code review, PR review, risk triage, finding-by-severity reports.
+- `assets/templates/research-explainer.html`: research synthesis, architecture walkthroughs, module understanding, concept explainers.
+- `assets/templates/decision-matrix.html`: option comparison, recommendation, risks, and confirmation questions.
+
+Use `assets/components/report-ui.css` and `assets/components/report-ui.js` for cards, chips, filters, tabs, copy buttons, hover focus, and dim/blur behavior. Use `rich-render-runtime.*` only for explicit runtime Markdown/Mermaid/code rendering with pinned libraries and source fallbacks.
+
+## Visual And Rich Content Rules
+
+- Put the conclusion first: decision, status, top risks, next action.
+- Prefer bullets, callouts, tables, diagrams, timelines, and annotated snippets.
+- Render Markdown to semantic HTML, Mermaid to inline SVG or pinned runtime with fallback, and code to highlighted snippets.
+- Escape/sanitize mixed-trust content. Code and paths stay inert unless a safe local reference is explicit.
+- Use sticky nav, jump links, filters, tabs, details, copy buttons, hover highlights, selected states, and dim/blur focus.
+- Include file paths, commands, dates, sources, assumptions, and verification status.
 
 ## Verification
 
 Before handing off:
 
-- Open or inspect the file enough to confirm it is not blank.
-- Check that text does not overlap and the layout works at a narrow viewport.
-- Verify interactive controls that affect the output.
-- If the artifact summarizes code or research, ensure linked evidence is present.
+Run `scripts/validate-html-report.mjs` when possible. Otherwise inspect enough to confirm non-empty output, narrow viewport sanity, rendered Markdown/Mermaid/code, working controls, and linked evidence.
 
 ## Related Skills
 
@@ -98,4 +95,4 @@ Before handing off:
 - Use `frontend-design` for polished product UI, websites, or applications.
 - Use `webapp-testing` or browser tooling when the HTML must be visually verified in a real browser.
 
-For detailed patterns and source inspiration, read `references/html-report-patterns.md` only when designing a non-trivial artifact.
+For detailed patterns, schema, template selection, rich-content handling, validation, and source inspiration, read `references/html-report-patterns.md`.
