@@ -1,6 +1,6 @@
 # Skill Routing And De-Duplication
 
-Date: 2026-05-11
+Date: 2026-05-15
 
 This project intentionally avoids installing every famous skill pack wholesale. Prefer the narrowest skill that matches the user request.
 
@@ -49,6 +49,7 @@ Use [Skill quality guide](skill-quality-guide.md) for description, gotcha, progr
 - Add positive, negative, and forbidden-load examples before semantic changes to an installed skill's description.
 - Add overlap notes here when a new skill could plausibly steal traffic from an existing skill.
 - Keep broad project behavior in `AGENTS.md`; keep conditional behavior in skills.
+- Keep host-native Codex behavior in Codex/project guidance unless Skill Hub adds portable workflow context, target-repo lifecycle assets, deterministic checks, or cross-host mapping.
 
 ## Routing Eval Boundaries
 
@@ -63,6 +64,12 @@ These boundaries are mirrored by `tests/fixtures/skill-routing-cases.json` so de
 - `security-review` loads for focused security-sensitive code, auth, secrets, injection, unsafe IO, or payments.
 - `verification-loop` loads for completion gates after work is done, not for root-cause diagnosis or review analysis.
 - `feynman-learning-coach` loads only for explicit learning, tutoring, study, mastery, exam/interview prep, syllabus building, or coached topic sessions.
+
+## Codex Host Boundary
+
+Codex-native capabilities are the baseline for Codex targets. Skills should not route just to wrap native skills/plugins, automations or thread wakeups, review/comment flows, browser or frontend inspection, remote/app-server controls, or multi-agent orchestration.
+
+Add or keep a Skill Hub route only when it contributes a portable asset, a target-repo lifecycle decision, deterministic validation, readiness analysis, or cross-host compatibility guidance. If a native Codex feature makes an existing skill or doc claim stale, update the claim or move the surface to explicit-only before adding another default route.
 
 ## Removed Duplicate
 

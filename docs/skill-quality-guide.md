@@ -1,6 +1,6 @@
 # Skill Quality Guide
 
-Date: 2026-05-12
+Date: 2026-05-15
 
 This guide defines the quality bar for Skill Hub skills. It turns the public Agent Skills guidance provided in the May 2026 Perplexity write-up into local, reviewable rules for this repository.
 
@@ -28,6 +28,7 @@ Do not create or install a skill when:
 
 - The content is only a list of ordinary commands the model already knows.
 - The content duplicates root `AGENTS.md`, Codex system instructions, or common project conventions.
+- The content only reimplements host-native UI, orchestration, automation, review, browser, or multi-agent behavior already supplied by Codex.
 - The source changes faster than Skill Hub can maintain it.
 - The capability belongs in a named CLI/profile decision rather than automatic routing.
 - The main value is broad advice, not a bounded workflow or durable special case.
@@ -136,6 +137,7 @@ For third-party evaluations, capture the eval rationale in docs even if the skil
 - Prefer selective adaptation over wholesale imports.
 - Keep broad workflow principles in `AGENTS.md`; keep conditional workflow context in skills.
 - Keep volatile API/tool behavior in live documentation lookup, not static skills.
+- Re-check current Codex host capabilities before adding host-specific skills, wrappers, or workflow docs; prefer portable assets, lifecycle governance, deterministic checks, and cross-host mapping over duplicating native Codex surfaces.
 - Keep side-effect-heavy workflows explicit-only until the repo has confirmed safety boundaries.
 - Run `scripts/validate-skills.ps1 -SkipExternal` after skill file changes.
 - Run `bun run validate` before claiming repo-level changes are complete.
