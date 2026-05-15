@@ -32,16 +32,16 @@ None.
 ## Impact
 
 - Affected skill assets:
-  - `.agents/skills/html-work-reports/SKILL.md`
-  - `.agents/skills/html-work-reports/references/html-report-patterns.md`
-  - `.agents/skills/html-work-reports/references/report-input-schema.json`
-  - `.agents/skills/html-work-reports/assets/components/report-ui.css`
-  - `.agents/skills/html-work-reports/assets/components/report-ui.js`
-  - `.agents/skills/html-work-reports/assets/components/rich-render-runtime.css`
-  - `.agents/skills/html-work-reports/assets/components/rich-render-runtime.js`
-  - `.agents/skills/html-work-reports/assets/fixtures/*.json`
-  - `.agents/skills/html-work-reports/scripts/create-report.mjs`
-  - `.agents/skills/html-work-reports/scripts/validate-html-report.mjs`
+  - `.codex/skills/html-work-reports/SKILL.md`
+  - `.codex/skills/html-work-reports/references/html-report-patterns.md`
+  - `.codex/skills/html-work-reports/references/report-input-schema.json`
+  - `.codex/skills/html-work-reports/assets/components/report-ui.css`
+  - `.codex/skills/html-work-reports/assets/components/report-ui.js`
+  - `.codex/skills/html-work-reports/assets/components/rich-render-runtime.css`
+  - `.codex/skills/html-work-reports/assets/components/rich-render-runtime.js`
+  - `.codex/skills/html-work-reports/assets/fixtures/*.json`
+  - `.codex/skills/html-work-reports/scripts/create-report.mjs`
+  - `.codex/skills/html-work-reports/scripts/validate-html-report.mjs`
 - Affected tests:
   - `tests/htmlWorkReportsSkill.test.ts`
   - routing/quality tests only if skill trigger text changes; this change should avoid broad routing trigger changes unless required.

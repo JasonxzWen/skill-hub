@@ -52,7 +52,7 @@ Strong success criteria let the LLM loop independently. Weak criteria ("make it 
 
 ## Everything Claude Code (ECC) Integration
 
-This project has a local ECC checkout at `vendor/everything-claude-code` and a Codex-ready skill surface at `.agents/skills`.
+This project has a local ECC checkout at `vendor/everything-claude-code` and a Codex-ready skill surface at `.codex/skills`.
 
 Use ECC skills when they match the task, especially:
 
@@ -120,7 +120,7 @@ Use `skill-evaluator` whenever the user asks to evaluate, install, compare, or i
 For every third-party skill evaluation:
 
 - Read upstream README, skill bodies, plugin metadata, and license before deciding.
-- Compare against `.agents/skills`, `.codex/skills`, root `AGENTS.md`, and `docs/skill-routing.md`.
+- Compare against `.codex/skills`, root `AGENTS.md`, and `docs/skill-routing.md`.
 - Install only when the candidate fills a real gap or provides a materially better bounded workflow.
 - Prefer reject or explicit-only status when the candidate repeats existing behavior or would create trigger noise.
 - Update `docs/source-projects.md` and `docs/skill-routing.md` immediately with the decision, including rejected candidates.

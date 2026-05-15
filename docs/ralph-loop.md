@@ -16,8 +16,8 @@ Downloaded source is kept at `vendor/snarktank-ralph/` for local reference and i
 
 | Path | Purpose |
 |---|---|
-| `.agents/skills/ralph-prd/` | Codex skill for writing Ralph-ready PRDs. |
-| `.agents/skills/ralph-loop/` | Codex skill for converting PRDs and running the loop. |
+| `.codex/skills/ralph-prd/` | Codex skill for writing Ralph-ready PRDs. |
+| `.codex/skills/ralph-loop/` | Codex skill for converting PRDs and running the loop. |
 | `scripts/ralph/ralph.ps1` | Windows/Codex-native loop runner. |
 | `scripts/ralph/CODEX.md` | Prompt used for each fresh Codex iteration. |
 | `scripts/ralph/prd.json.example` | Example Ralph story file. |

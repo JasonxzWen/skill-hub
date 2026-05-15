@@ -5,9 +5,9 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { expect, test } from 'bun:test';
 
-const skillPath = '.agents/skills/html-work-reports/SKILL.md';
+const skillPath = '.codex/skills/html-work-reports/SKILL.md';
 const skill = fs.readFileSync(skillPath, 'utf8');
-const skillDir = '.agents/skills/html-work-reports';
+const skillDir = '.codex/skills/html-work-reports';
 const createReportScript = `${skillDir}/scripts/create-report.mjs`;
 const validateReportScript = `${skillDir}/scripts/validate-html-report.mjs`;
 

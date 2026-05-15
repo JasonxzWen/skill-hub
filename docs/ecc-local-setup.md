@@ -12,13 +12,13 @@ This project has a local Everything Claude Code (ECC) setup for Codex.
 - Commit: `841beea45cb25ba51f29fa45b7e272938d19b80a`
 - License: MIT, see upstream `LICENSE`
 
-The local checkout is ignored by Git so the repository does not accidentally vendor a full third-party repo. The imported Codex-facing skill surface is tracked separately under `.agents/skills/`.
+The local checkout is ignored by Git so the repository does not accidentally vendor a full third-party repo. The imported Codex-facing skill surface is tracked separately under `.codex/skills/`.
 
 ## Installed Project Files
 
 | Path | Purpose |
 |---|---|
-| `.agents/skills/` | ECC's 32 Codex-ready skills with `SKILL.md` and `agents/openai.yaml`. |
+| `.codex/skills/` | ECC's 32 Codex-ready skills with `SKILL.md` and `agents/openai.yaml`. |
 | `.codex/AGENTS.md` | Codex-specific ECC guidance. |
 | `.codex/config.toml` | Project-local Codex config adapted from ECC's reference config. |
 | `.codex/agents/` | ECC explorer, reviewer, and docs-researcher multi-agent role configs. |
@@ -42,7 +42,7 @@ The local checkout is ignored by Git so the repository does not accidentally ven
 
 ```powershell
 git -C vendor\everything-claude-code pull --ff-only
-Copy-Item -Recurse -Force vendor\everything-claude-code\.agents\skills\* .agents\skills\
+Copy-Item -Recurse -Force vendor\everything-claude-code\.codex\skills\* .codex\skills\
 Copy-Item -Recurse -Force vendor\everything-claude-code\.codex\agents\* .codex\agents\
 Copy-Item -Force vendor\everything-claude-code\.codex\AGENTS.md .codex\AGENTS.md
 ```

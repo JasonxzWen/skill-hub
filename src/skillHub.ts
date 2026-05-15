@@ -362,8 +362,8 @@ class CliError extends Error {
 }
 
 export const AGENT_SKILL_DIRS = Object.freeze({
-  codex: '.agents/skills',
-  opencode: '.agents/skills',
+  codex: '.codex/skills',
+  opencode: '.opencode/skills',
   'claude-code': '.claude/skills',
 } satisfies Record<AgentName, string>);
 
@@ -1025,11 +1025,11 @@ function detectRoutingEvidence(targetDir: string): AgentReadinessEvidence[] {
   return sortEvidence([
     ...evidenceForExistingPaths(targetDir, [
       '.agents/AGENTS.md',
-      '.agents/skills',
       '.claude/agents',
+      '.claude/skills',
       '.codex/agents',
       '.codex/skills',
-      '.opencode',
+      '.opencode/skills',
       'docs/skill-routing.md',
       'openspec/changes',
       'scripts/ralph',
@@ -1040,8 +1040,9 @@ function detectRoutingEvidence(targetDir: string): AgentReadinessEvidence[] {
 
 function detectLearningCaptureEvidence(targetDir: string): AgentReadinessEvidence[] {
   return evidenceForExistingPaths(targetDir, [
-    '.agents/skills',
+    '.claude/skills',
     '.codex/skills',
+    '.opencode/skills',
     'CHANGELOG.md',
     'changelog.md',
     'docs',

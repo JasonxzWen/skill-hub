@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { expect, test } from 'bun:test';
 
-const skillDir = '.agents/skills/update-skill-hub';
+const skillDir = '.codex/skills/update-skill-hub';
 
 function read(path: string): string {
   return fs.readFileSync(path, 'utf8');

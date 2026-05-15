@@ -12,19 +12,19 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - OpenSpec scaffolding exists under `openspec/`.
 - Project-local Codex skills, including OpenSpec helpers and adapted built-ins, exist under `.codex/skills/`.
 - Everything Claude Code is downloaded locally under `vendor/everything-claude-code/`.
-- ECC's Codex skill surface has been imported under `.agents/skills/`.
+- ECC's Codex skill surface has been imported under `.codex/skills/`.
 - Vercel Labs `skills` is downloaded locally under `vendor/vercel-labs-skills/`.
-- Vercel's `find-skills` skill is installed under `.agents/skills/find-skills/`.
+- Vercel's `find-skills` skill is installed under `.codex/skills/find-skills/`.
 - Vercel Labs `agent-skills` is downloaded locally under `vendor/vercel-labs-agent-skills/`.
-- Selected Vercel web skills are installed under `.agents/skills/`.
+- Selected Vercel web skills are installed under `.codex/skills/`.
 - Ralph is downloaded locally under `vendor/snarktank-ralph/`.
-- Ralph PRD and loop skills are installed under `.agents/skills/`, with a Codex-native runner under `scripts/ralph/`.
-- `html-work-reports` is installed under `.agents/skills/` to generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions and work artifacts.
-- `update-skill-hub` is installed under `.agents/skills/` to audit installed skill updates and evaluate new candidate skills against target-repo evidence.
+- Ralph PRD and loop skills are installed under `.codex/skills/`, with a Codex-native runner under `scripts/ralph/`.
+- `html-work-reports` is installed under `.codex/skills/` to generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions and work artifacts.
+- `update-skill-hub` is installed under `.codex/skills/` to audit installed skill updates and evaluate new candidate skills against target-repo evidence.
 - Matt Pocock's `skills` repository is downloaded locally under `vendor/mattpocock-skills/`.
-- Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.agents/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
-- EveryInc's `compound-engineering-plugin` repository is downloaded locally under `vendor/EveryInc-compound-engineering-plugin/`; only its `ce-code-review` workflow has been adapted as `.agents/skills/compound-code-review/`.
-- `feynman-learning-coach` is installed under `.agents/skills/` as an explicit learning profile inspired by Learn FASTER's scoped learning lifecycle.
+- Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.codex/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
+- EveryInc's `compound-engineering-plugin` repository is downloaded locally under `vendor/EveryInc-compound-engineering-plugin/`; only its `ce-code-review` workflow has been adapted as `.codex/skills/compound-code-review/`.
+- `feynman-learning-coach` is installed under `.codex/skills/` as an explicit learning profile inspired by Learn FASTER's scoped learning lifecycle.
 - A `harness` install profile can scaffold root `AGENTS.md` plus state, verification, handoff, and quality templates under `harness/` for target repos.
 - A machine-readable capability graph exists at `capabilities/index.json`, with a human-readable map in `docs/capability-map.md`.
 - A Node-compatible CLI exists as `skill-hub`, supporting profile-based `analyze`, `install`, `init`, `status`, `update`, `migrate-lock`, and `remove` reports.
@@ -37,9 +37,8 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 ## Repository Layout
 
 ```text
-.codex/skills/        Codex-local skills: OpenSpec helpers and adapted built-ins
+.codex/skills/        Codex-local skills from OpenSpec, ECC, Vercel, Ralph, local, and adapted sources
 .codex/agents/        ECC Codex multi-agent role configs
-.agents/skills/       Cross-agent skill assets from ECC, Vercel, Ralph, local, and adapted sources
 capabilities/         Machine-readable capability graph and install profiles
 config/               Artifact policy for Git tracking and npm package contents
 harness/              Installable harness environment templates for target repos
@@ -163,7 +162,7 @@ skill-hub --help
 
 Publishing uses GitHub Actions trusted publishing after the package exists and npm is configured. See [npm publishing](docs/npm-publishing.md) for the maintainer checklist.
 
-Git and npm inclusion rules are centralized in `config/artifact-policy.json`. `dist/` is generated for npm and ignored by Git, installable skills such as `.agents/skills/html-work-reports/` are both committed and published, and active `openspec/changes/<name>/` work stays Git-only until archived.
+Git and npm inclusion rules are centralized in `config/artifact-policy.json`. `dist/` is generated for npm and ignored by Git, installable skills such as `.codex/skills/html-work-reports/` are both committed and published, and active `openspec/changes/<name>/` work stays Git-only until archived.
 
 In the current sandbox, `openspec` may warn as not visible even though it is installed on the host. Use `-SkipExternal` to validate only repository files:
 

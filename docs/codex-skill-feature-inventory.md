@@ -53,13 +53,13 @@ When Codex internalizes a capability that Skill Hub already documents or adapts,
 
 | Surface | Count | Local path |
 |---|---:|---|
-| Codex-ready ECC skills | 32 | `.agents/skills/` |
-| Vercel skills | 5 | `.agents/skills/` |
-| Ralph loop skills | 2 | `.agents/skills/` |
-| Matt Pocock adapted skills | 3 | `.agents/skills/` |
-| Compound Engineering adapted skills | 1 | `.agents/skills/` |
-| Local learning skills | 1 | `.agents/skills/` |
-| Local governance/reporting skills | 3 | `.agents/skills/` |
+| Codex-ready ECC skills | 32 | `.codex/skills/` |
+| Vercel skills | 5 | `.codex/skills/` |
+| Ralph loop skills | 2 | `.codex/skills/` |
+| Matt Pocock adapted skills | 3 | `.codex/skills/` |
+| Compound Engineering adapted skills | 1 | `.codex/skills/` |
+| Local learning skills | 1 | `.codex/skills/` |
+| Local governance/reporting skills | 3 | `.codex/skills/` |
 | Adapted Anthropic/Claude built-ins | 20 | `.codex/skills/` |
 | Codex role configs | 3 | `.codex/agents/` |
 | Codex reference supplement | 1 | `.codex/AGENTS.md` |

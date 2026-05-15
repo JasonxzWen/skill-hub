@@ -25,7 +25,7 @@
       "title": "Runtime code",
       "group": "code",
       "status": "ready",
-      "filePath": ".agents/skills/html-work-reports/assets/components/rich-render-runtime.js",
+      "filePath": ".codex/skills/html-work-reports/assets/components/rich-render-runtime.js",
       "language": "javascript",
       "startLine": 103,
       "highlightLines": [104],

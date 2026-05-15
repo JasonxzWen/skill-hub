@@ -1,6 +1,6 @@
 {
   "name": "@jasonwen/skill-hub",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Curated agent capability installer for Codex, Claude Code, OpenCode, and compatible skill hosts.",
   "type": "module",
   "main": "dist/skillHub.js",
@@ -32,7 +32,6 @@
     "openspec/config.yaml",
     "openspec/specs/",
     "openspec/changes/archive/",
-    ".agents/skills/",
     ".codex/agents/",
     ".codex/config.toml",
     ".codex/skills/",

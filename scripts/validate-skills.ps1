@@ -21,7 +21,7 @@ function Get-SkillName($SkillMdPath) {
 
 Push-Location $Root
 try {
-  $skillRoots = @(".codex\skills", ".agents\skills")
+  $skillRoots = @(".codex\skills")
   $skillDirs = @()
 
   foreach ($root in $skillRoots) {
@@ -31,7 +31,7 @@ try {
   }
 
   if ($skillDirs.Count -eq 0) {
-    Add-Failure "No skills found under .codex/skills or .agents/skills"
+    Add-Failure "No skills found under .codex/skills"
   }
 
   if (-not $QuickValidateAvailable) {
@@ -90,7 +90,7 @@ try {
     "Claude.ai",
     "WebFetch"
   )
-  $textFiles = Get-ChildItem -Path ".codex\skills", ".agents\skills" -Recurse -File -Include *.md,*.yaml,*.yml,*.json,*.txt -ErrorAction SilentlyContinue
+  $textFiles = Get-ChildItem -Path ".codex\skills" -Recurse -File -Include *.md,*.yaml,*.yml,*.json,*.txt -ErrorAction SilentlyContinue
   foreach ($file in $textFiles) {
     $matches = Select-String -LiteralPath $file.FullName -Pattern $claudeOnlyPatterns -SimpleMatch -ErrorAction SilentlyContinue |
       Where-Object { $_.Line -notmatch "Codex adaptation" }
@@ -107,7 +107,7 @@ try {
     }
   }
 
-  $yamlOutput = & python -c "import pathlib,yaml; [yaml.safe_load(p.read_text(encoding='utf-8')) for p in list(pathlib.Path('.codex/skills').rglob('openai.yaml')) + list(pathlib.Path('.agents/skills').rglob('openai.yaml'))]; print('openai yaml ok')" 2>&1
+  $yamlOutput = & python -c "import pathlib,yaml; [yaml.safe_load(p.read_text(encoding='utf-8')) for p in pathlib.Path('.codex/skills').rglob('openai.yaml')]; print('openai yaml ok')" 2>&1
   if ($LASTEXITCODE -ne 0) {
     Add-Failure "openai.yaml parse failed: $($yamlOutput -join ' ')"
   }

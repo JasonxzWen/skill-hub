@@ -124,12 +124,12 @@ This design is intentionally derived from source material rather than copied pro
 ```json
 {
   "kind": "skill",
-  "path": ".agents/skills/verification-loop",
+  "path": ".codex/skills/verification-loop",
   "version": "0.1.0",
   "source": "everything-claude-code",
   "provides": ["completion-verification"],
   "detects": [
-    { "path": ".agents/skills/verification-loop/SKILL.md" },
+    { "path": ".codex/skills/verification-loop/SKILL.md" },
     { "path": ".claude/skills/verification-loop/SKILL.md" }
   ],
   "agents": ["codex", "opencode", "claude-code"],
@@ -372,7 +372,7 @@ The packed artifact should include:
 - `bin/skill-hub.mjs`;
 - built `dist/`;
 - `capabilities/index.json`;
-- installable `.agents/skills/`, `.codex/skills/`, `.codex/agents/`, and `.codex/config.toml` assets that are referenced by profiles;
+- installable `.codex/skills/`, `.codex/skills/`, `.codex/agents/`, and `.codex/config.toml` assets that are referenced by profiles;
 - docs needed for user-facing reports and package context;
 - `openspec/specs/`, `openspec/config.yaml`, and archived OpenSpec change records for source traceability;
 - selected `scripts/ralph/` files and validation scripts when they are referenced by installable components or validation docs.

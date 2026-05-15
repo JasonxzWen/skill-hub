@@ -56,8 +56,8 @@ Report components must preserve the single-file static HTML contract. Use inline
 Use the generator first for normal reports:
 
 ```powershell
-bun .agents/skills/html-work-reports/scripts/create-report.mjs --input report.json --out-dir reports --slug my-report --json
-bun .agents/skills/html-work-reports/scripts/validate-html-report.mjs reports/my-report.html --json
+bun .codex/skills/html-work-reports/scripts/create-report.mjs --input report.json --out-dir reports --slug my-report --json
+bun .codex/skills/html-work-reports/scripts/validate-html-report.mjs reports/my-report.html --json
 ```
 
 Input is JSON and follows `references/report-input-schema.json`. The minimum useful shape is content-first and has no required evidence, code, diagram, verification, or action block:

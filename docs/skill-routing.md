@@ -10,8 +10,7 @@ Use [Skill quality guide](skill-quality-guide.md) for description, gotcha, progr
 
 | Root | Purpose |
 |---|---|
-| `.codex/skills/` | Anthropic/Claude built-in skills adapted for Codex plus OpenSpec helpers. |
-| `.agents/skills/` | Cross-agent skills from Everything Claude Code, Vercel, and other agent-skill ecosystems. |
+| `.codex/skills/` | Codex-local skills from OpenSpec, ECC, Vercel, Ralph, local, and adapted sources. |
 | `.codex/agents/` | Codex multi-agent role configs from ECC. |
 
 ## Priority Rules
@@ -81,7 +80,7 @@ The project-local `.codex/skills/skill-creator` copy was removed. Codex already 
 
 Use `html-work-reports` when a non-trivial task is complete and the handoff should be browsable, visual, interactive, or exportable. It is intentionally narrower than `web-artifacts-builder`: it covers one-file reports, reviews, plans, explainers, status dashboards, and lightweight editors, while `web-artifacts-builder` remains the choice for complex bundled React/Tailwind artifacts.
 
-The strengthened version ships reusable assets under `.agents/skills/html-work-reports/assets/` plus internal generator and validator scripts under `.agents/skills/html-work-reports/scripts/`. Prefer JSON-driven generation through `create-report.mjs`; use custom HTML only for exceptions, and run `validate-html-report.mjs` before handoff.
+The strengthened version ships reusable assets under `.codex/skills/html-work-reports/assets/` plus internal generator and validator scripts under `.codex/skills/html-work-reports/scripts/`. Prefer JSON-driven generation through `create-report.mjs`; use custom HTML only for exceptions, and run `validate-html-report.mjs` before handoff.
 
 This skill is inspired by [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) and local evaluation of `html-tools`-style single-file artifacts. Third-party HTML artifact skills were not installed because the repository needed a governance/reporting trigger, not another broad tool-building trigger.
 

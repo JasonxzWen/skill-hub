@@ -152,7 +152,7 @@ try {
   $forceTarget = New-Target -Root $tempRoot
   Invoke-SkillHub -Arguments @("install", $forceTarget, "--profile", "minimal", "--agent", "codex", "--yes", "--json") | Out-Null
   Set-ComponentStale -TargetDir $forceTarget -ComponentIds @("skill:grill-me")
-  Add-Content -LiteralPath (Join-Path $forceTarget ".agents\skills\grill-me\SKILL.md") -Value "modified"
+  Add-Content -LiteralPath (Join-Path $forceTarget ".codex\skills\grill-me\SKILL.md") -Value "modified"
   Invoke-SkillHub -Arguments @("update", $forceTarget, "--yes", "--json") -ExpectedExitCode 3 | Out-Null
   $forced = Invoke-SkillHub -Arguments @("update", $forceTarget, "--force", "--yes", "--json") | ConvertFrom-Json
   if (@($forced.forced | Where-Object { $_.id -eq "skill:grill-me" }).Count -ne 1) {
@@ -171,7 +171,7 @@ try {
   $divergentTarget = New-Target -Root $tempRoot
   Invoke-SkillHub -Arguments @("install", $divergentTarget, "--profile", "minimal", "--agent", "codex", "--yes", "--json") | Out-Null
   Convert-ToSchemaOneLock -TargetDir $divergentTarget
-  Add-Content -LiteralPath (Join-Path $divergentTarget ".agents\skills\grill-me\SKILL.md") -Value "divergent"
+  Add-Content -LiteralPath (Join-Path $divergentTarget ".codex\skills\grill-me\SKILL.md") -Value "divergent"
   Invoke-SkillHub -Arguments @("migrate-lock", $divergentTarget, "--yes", "--json") -ExpectedExitCode 3 | Out-Null
 
   Write-Host "Managed update smoke passed."

@@ -27,7 +27,7 @@ function parseArgs(argv) {
 
 function usage() {
   return [
-    "Usage: node .agents/skills/html-work-reports/scripts/validate-html-report.mjs report.html [--json] [--skip-browser] [--require-browser]",
+    "Usage: node .codex/skills/html-work-reports/scripts/validate-html-report.mjs report.html [--json] [--skip-browser] [--require-browser]",
     "",
     "Checks report structure, runtime rendering state, evidence, controls, and browser visual behavior."
   ].join("\n");

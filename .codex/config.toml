@@ -8,7 +8,7 @@ approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 web_search = "live"
 
-persistent_instructions = "Follow project AGENTS.md plus .codex/AGENTS.md. Use .agents/skills when a matching ECC skill applies."
+persistent_instructions = "Follow project AGENTS.md plus .codex/AGENTS.md. Use .codex/skills when a matching ECC skill applies."
 
 # MCP servers from ECC's reference baseline.
 # API-backed servers inherit credentials from the launching environment.

@@ -70,9 +70,9 @@ Default log location:
 Run the logger from the skill directory:
 
 ```powershell
-python .agents/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event scope --level beginner --target "Explain the core idea" --summary "Established scope and target."
-python .agents/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event concept --concept "Core concept" --summary "Explained the concept and asked a diagnostic question." --confidence 3
-python .agents/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event teach-back --concept "Core concept" --summary "User explained it in their own words; gap remains around X." --confidence 4
+python .codex/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event scope --level beginner --target "Explain the core idea" --summary "Established scope and target."
+python .codex/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event concept --concept "Core concept" --summary "Explained the concept and asked a diagnostic question." --confidence 3
+python .codex/skills/feynman-learning-coach/scripts/log_learning_event.py --topic "Topic Name" --event teach-back --concept "Core concept" --summary "User explained it in their own words; gap remains around X." --confidence 4
 ```
 
 The script writes:

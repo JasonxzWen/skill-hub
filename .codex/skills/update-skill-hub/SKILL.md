@@ -46,7 +46,7 @@ Do not reimplement deterministic install, update, status, or remove behavior ins
    - State success criteria: sources checked, decisions recorded, files updated, validation run.
 
 2. Inventory the current hub.
-   - Read `.agents/skills/`, `.codex/skills/`, `capabilities/index.json`, `docs/source-projects.md`, `docs/skill-routing.md`, `docs/codex-skill-feature-inventory.md`, and `README.md`.
+   - Read `.codex/skills/`, `.codex/skills/`, `capabilities/index.json`, `docs/source-projects.md`, `docs/skill-routing.md`, `docs/codex-skill-feature-inventory.md`, and `README.md`.
    - Note which skills are local-only, copied, adapted, vendored, or profile-managed.
    - For target repos, inspect manifests, lockfiles, framework configs, file extensions, CI, and docs before judging fit.
 

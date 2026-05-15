@@ -21,7 +21,7 @@ For every candidate:
 
 1. Read upstream README, skill bodies, plugin metadata, and license.
 2. Record source URL, local vendor path, upstream commit or version, and license/status.
-3. Compare against `.agents/skills/`, `.codex/skills/`, `AGENTS.md`, and `docs/skill-routing.md`.
+3. Compare against `.codex/skills/`, `.codex/skills/`, `AGENTS.md`, and `docs/skill-routing.md`.
 4. Decide whether it adds a distinct capability or only repeats existing behavior.
 5. Check the candidate against the skill quality guide:
    - Does the `description` behave like a routing trigger?

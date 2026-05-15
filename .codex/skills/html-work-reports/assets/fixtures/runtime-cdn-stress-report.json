@@ -102,7 +102,7 @@
       "priority": 1,
       "status": "ready",
       "summary": "Wide code must scroll inside the panel and keep line numbers aligned.",
-      "filePath": ".agents/skills/html-work-reports/scripts/create-report.mjs",
+      "filePath": ".codex/skills/html-work-reports/scripts/create-report.mjs",
       "language": "typescript",
       "startLine": 118,
       "highlightLines": [119, 123],
@@ -114,7 +114,7 @@
       "group": "code",
       "priority": 2,
       "status": "ready",
-      "filePath": ".agents/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json",
+      "filePath": ".codex/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json",
       "language": "json",
       "startLine": 1,
       "highlightLines": [4, 8],
@@ -130,7 +130,7 @@
       "language": "bash",
       "startLine": 72,
       "highlightLines": [73],
-      "content": "bun .agents/skills/html-work-reports/scripts/create-report.mjs --input .agents/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json --out-dir reports --slug html-work-reports-runtime-cdn-stress --json\nbun .agents/skills/html-work-reports/scripts/validate-html-report.mjs reports/html-work-reports-runtime-cdn-stress.html --json --require-browser"
+      "content": "bun .codex/skills/html-work-reports/scripts/create-report.mjs --input .codex/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json --out-dir reports --slug html-work-reports-runtime-cdn-stress --json\nbun .codex/skills/html-work-reports/scripts/validate-html-report.mjs reports/html-work-reports-runtime-cdn-stress.html --json --require-browser"
     },
     {
       "type": "diff",
@@ -138,7 +138,7 @@
       "group": "code",
       "priority": 4,
       "status": "warn",
-      "filePath": ".agents/skills/html-work-reports/scripts/create-report.mjs",
+      "filePath": ".codex/skills/html-work-reports/scripts/create-report.mjs",
       "startLine": 544,
       "content": "- if (input.renderMode && ![\"pre-rendered\", \"runtime\"].includes(input.renderMode)) errors.push(\"renderMode must be pre-rendered or runtime.\");\n+ if (input.renderMode && ![\"runtime-cdn\", \"pre-rendered\", \"fallback-only\", \"runtime\"].includes(input.renderMode)) errors.push(\"renderMode must be runtime-cdn, pre-rendered, fallback-only, or runtime alias.\");"
     },
@@ -283,7 +283,7 @@
     {
       "kind": "file",
       "label": "Stress fixture",
-      "value": ".agents/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json",
+      "value": ".codex/skills/html-work-reports/assets/fixtures/runtime-cdn-stress-report.json",
       "status": "info"
     },
     {

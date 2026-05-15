@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SKILL_ROOTS = ['.agents/skills', '.codex/skills'] as const;
+const SKILL_ROOTS = ['.codex/skills'] as const;
 const SPOKE_NAMES = ['references', 'scripts', 'assets'] as const;
 const TARGET_DESCRIPTION_WORDS = 50;
 const LARGE_BODY_BYTES = 12_000;

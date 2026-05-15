@@ -140,7 +140,7 @@ function parseArgs(argv) {
 
 function usage() {
   return [
-    "Usage: node .agents/skills/html-work-reports/scripts/create-report.mjs --input report.json [--out-dir reports] [--slug name] [--json] [--browser-mermaid]",
+    "Usage: node .codex/skills/html-work-reports/scripts/create-report.mjs --input report.json [--out-dir reports] [--slug name] [--json] [--browser-mermaid]",
     "",
     "Inputs follow references/report-input-schema.json. Default renderMode is runtime-cdn."
   ].join("\n");

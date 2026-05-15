@@ -13,7 +13,7 @@ This supplements the root `AGENTS.md` with Codex-specific guidance.
 
 ## Skills Discovery
 
-Skills are auto-loaded from `.agents/skills/`. Each skill contains:
+Skills are auto-loaded from `.codex/skills/`. Each skill contains:
 - `SKILL.md` — Detailed instructions and workflow
 - `agents/openai.yaml` — Codex interface metadata
 
@@ -86,7 +86,7 @@ Sample role configs in this repo:
 |---------|------------|-----------|
 | Hooks | 8+ event types | Supported behind a Codex feature flag, with config/local hooks and plugin-bundled lifecycle config |
 | Context file | CLAUDE.md + AGENTS.md | Layered AGENTS.md / AGENTS.override.md guidance |
-| Skills | Skills loaded via plugin | Native `.agents/skills/`; plugins are the installable distribution unit |
+| Skills | Skills loaded via plugin | Native `.codex/skills/`; plugins are the installable distribution unit |
 | Commands | `/slash` commands | Slash commands plus model-invoked skills |
 | Agents | Subagent Task tool | Subagents via `/agent`, built-in roles, and project-local `[agents.<name>]` role configs |
 | Security | Hook-based enforcement | Instruction + sandbox first; optional hooks can add deterministic checks |

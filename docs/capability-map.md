@@ -41,7 +41,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 | Apply change | `tdd-workflow`, `verification-loop` | Keep for existing OpenSpec changes; do not use as the default feature-work lane. |
 | Archive change | No strong overlap | Keep as OpenSpec-specific lifecycle command. |
 
-The main observed risk is not that OpenSpec is useless. It is that OpenSpec skills live under `.codex/skills/`, while the cross-agent install convention used by Vercel `skills` and this CLI installs skills into `.agents/skills/` for Codex/OpenCode-compatible hosts. The new capability graph lets `skill-hub init --profile openspec-formal` copy those skills into the target agent skill directory when they are actually wanted.
+OpenSpec remains useful, but it should stay explicit rather than becoming the default planning lane. The capability graph lets `skill-hub init --profile openspec-formal` copy those skills into the selected target agent skill directory only when they are actually wanted.
 
 ## Overlap Decisions
 

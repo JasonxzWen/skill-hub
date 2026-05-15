@@ -10,11 +10,11 @@ This file tracks source projects that are worth studying or adapting for Codex.
 |---|---|---|
 | [Superpowers](https://github.com/obra/superpowers) | High-signal disciplined engineering workflow: brainstorming, planning, TDD, debugging, review, worktrees, and completion verification. | Optional source only for now. Not installed because ECC plus adapted built-ins already cover most workflow behavior, and installing the full pack would add trigger noise. |
 | [Superpowers Codex tool mapping](https://github.com/obra/superpowers/blob/main/skills/using-superpowers/references/codex-tools.md) | Explicit mapping from Claude Code tools to Codex equivalents. | Treat as the first compatibility checklist for any ported skill. |
-| [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) | Broad agent harness performance system with agents, skills, rules, hooks, MCP configs, and command shims. | Imported selectively for Codex: `.agents/skills`, `.codex/AGENTS.md`, `.codex/agents`, and adapted `.codex/config.toml`. |
+| [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) | Broad agent harness performance system with agents, skills, rules, hooks, MCP configs, and command shims. | Imported selectively for Codex: `.codex/skills`, `.codex/AGENTS.md`, `.codex/agents`, and adapted `.codex/config.toml`. |
 | [Compound Engineering Plugin](https://github.com/EveryInc/compound-engineering-plugin) | Multi-plugin engineering workflow suite with Codex plugin metadata, a strong code-review pipeline, planning/doc-review loops, learning capture, PR-feedback resolution, product pulse, and coding tutor flows. | Evaluated on 2026-05-11. Installed only the code-review lane as `compound-code-review`; the rest remains explicit-only because it overlaps existing ECC/Vercel/Ralph skills or adds external-action surfaces. |
 | [Learn FASTER](https://github.com/hluaguo/learn-faster-kit) | Learning-coach CLI with agent-specific templates, `.learning/` state, syllabus generation, teach-back prompts, progress logging, quizzes, and spaced-repetition review scripts. | Evaluated on 2026-05-12 at `cce560b51d765f08407d37afd3f4dad19d32b268`. Adapted only as the lightweight `feynman-learning-coach`; the upstream CLI, generated root instructions, and full runtime are not copied. |
 | [Learn Harness Engineering](https://github.com/walkinglabs/learn-harness-engineering) | Course and template library for agent harness environments: root instructions, feature state, progress logs, init scripts, clean-state checks, evaluator rubrics, and quality snapshots. | Evaluated on 2026-05-13 from the published Chinese course and `docs/zh/resources/templates/`. Adapted as the explicit `harness` profile; no upstream skill or full course content is installed. |
-| [Vercel Labs Skills](https://github.com/vercel-labs/skills) | CLI/package manager for the open agent skills ecosystem, with Codex listed as a supported agent. | Installed the bundled `find-skills` skill into `.agents/skills/find-skills` and kept the source checkout under `vendor/` for reference. |
+| [Vercel Labs Skills](https://github.com/vercel-labs/skills) | CLI/package manager for the open agent skills ecosystem, with Codex listed as a supported agent. | Installed the bundled `find-skills` skill into `.codex/skills/find-skills` and kept the source checkout under `vendor/` for reference. |
 | [Vercel Agent Skills](https://github.com/vercel-labs/agent-skills) | Vercel-maintained Web, React, Next.js, View Transition, deployment, and React Native skills. | Installed only the low-risk Web/React subset; deployment, token, and React Native skills remain explicit-only candidates. |
 | [Ralph](https://github.com/snarktank/ralph) | Autonomous PRD story loop that repeatedly launches a fresh coding agent until every story passes. | Installed as a Codex-specific PowerShell runner plus two focused skills. The upstream Bash runner remains reference-only because it targets Amp and Claude Code. |
 | [Karpathy-inspired guidelines](https://github.com/forrestchang/andrej-karpathy-skills) | Four behavioral principles for reducing common LLM coding mistakes: clarify assumptions, keep changes simple, make surgical edits, and verify against goals. | Evaluated and not installed as a standalone skill because the same principles already live in root `AGENTS.md`; adding the skill would duplicate triggers. |
@@ -33,20 +33,20 @@ This file tracks source projects that are worth studying or adapting for Codex.
 | `forrestchang/andrej-karpathy-skills` | `vendor/forrestchang-andrej-karpathy-skills/` (ignored) | at `2c606141936f1eeef17fa3043a72095b4765b9c2` |
 | `mattpocock/skills` | `vendor/mattpocock-skills/` (ignored) | at `9fecab929abb904c68ce3366a1781df31ab22832` |
 | `EveryInc/compound-engineering-plugin` | `vendor/EveryInc-compound-engineering-plugin/` (ignored) | package `@every-env/compound-plugin` `3.8.0`; `compound-engineering` plugin `3.8.0`; `coding-tutor` plugin `1.3.0`; at `d090bde0ff1bbc33ec3c3b2049cb4687e9d76532` |
-| ECC Codex skill surface | `.agents/skills/` | Copied from upstream `.agents/skills/` |
+| ECC Codex skill surface | `.codex/skills/` | Copied from upstream ECC skill assets and normalized into the Codex-local skill root |
 | ECC Codex config supplement | `.codex/AGENTS.md`, `.codex/agents/` | Copied from upstream `.codex/` |
-| Vercel `find-skills` skill | `.agents/skills/find-skills/` | Copied from upstream `skills/find-skills/` |
-| Vercel Web/React skills | `.agents/skills/vercel-react-best-practices/`, `.agents/skills/web-design-guidelines/`, `.agents/skills/vercel-composition-patterns/`, `.agents/skills/vercel-react-view-transitions/` | Copied from upstream `skills/` with Codex metadata added |
-| Ralph Codex skills and runner | `.agents/skills/ralph-prd/`, `.agents/skills/ralph-loop/`, `scripts/ralph/` | Adapted from upstream PRD skills and loop prompt under MIT |
+| Vercel `find-skills` skill | `.codex/skills/find-skills/` | Copied from upstream `skills/find-skills/` |
+| Vercel Web/React skills | `.codex/skills/vercel-react-best-practices/`, `.codex/skills/web-design-guidelines/`, `.codex/skills/vercel-composition-patterns/`, `.codex/skills/vercel-react-view-transitions/` | Copied from upstream `skills/` with Codex metadata added |
+| Ralph Codex skills and runner | `.codex/skills/ralph-prd/`, `.codex/skills/ralph-loop/`, `scripts/ralph/` | Adapted from upstream PRD skills and loop prompt under MIT |
 | Karpathy-style baseline instructions | `AGENTS.md` | Already present as project-level behavior guidance; no separate skill installed |
-| Matt Pocock `grill-me` | `.agents/skills/grill-me/` | Adapted from upstream `skills/productivity/grill-me/` under MIT |
-| Matt Pocock `diagnose` | `.agents/skills/diagnose/` | Adapted from upstream `skills/engineering/diagnose/` under MIT |
-| Matt Pocock `prototype` | `.agents/skills/prototype/` | Adapted from upstream `skills/engineering/prototype/` under MIT |
-| Compound Engineering `ce-code-review` | `.agents/skills/compound-code-review/` | Adapted from upstream `plugins/compound-engineering/skills/ce-code-review` under MIT |
-| Learn FASTER-inspired Feynman coach | `.agents/skills/feynman-learning-coach/` | Original local skill inspired by upstream `cce560b51d765f08407d37afd3f4dad19d32b268` under MIT review |
+| Matt Pocock `grill-me` | `.codex/skills/grill-me/` | Adapted from upstream `skills/productivity/grill-me/` under MIT |
+| Matt Pocock `diagnose` | `.codex/skills/diagnose/` | Adapted from upstream `skills/engineering/diagnose/` under MIT |
+| Matt Pocock `prototype` | `.codex/skills/prototype/` | Adapted from upstream `skills/engineering/prototype/` under MIT |
+| Compound Engineering `ce-code-review` | `.codex/skills/compound-code-review/` | Adapted from upstream `plugins/compound-engineering/skills/ce-code-review` under MIT |
+| Learn FASTER-inspired Feynman coach | `.codex/skills/feynman-learning-coach/` | Original local skill inspired by upstream `cce560b51d765f08407d37afd3f4dad19d32b268` under MIT review |
 | Learn Harness Engineering-inspired harness templates | `harness/templates/` | Original local templates adapted from the course's five-subsystem model and Chinese template library under MIT review |
-| HTML work report guidance | `.agents/skills/html-work-reports/` | Original local skill inspired by Thariq Shihipar's HTML effectiveness article |
-| Skill Hub maintenance workflow | `.agents/skills/update-skill-hub/` | Original local skill for auditing installed skill updates and target-fit candidate decisions |
+| HTML work report guidance | `.codex/skills/html-work-reports/` | Original local skill inspired by Thariq Shihipar's HTML effectiveness article |
+| Skill Hub maintenance workflow | `.codex/skills/update-skill-hub/` | Original local skill for auditing installed skill updates and target-fit candidate decisions |
 
 ## Evaluated Matt Pocock Skills
 

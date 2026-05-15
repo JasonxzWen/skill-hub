@@ -37,7 +37,7 @@
     {
       "type": "code",
       "title": "Core code path",
-      "filePath": ".agents/skills/html-work-reports/scripts/create-report.mjs",
+      "filePath": ".codex/skills/html-work-reports/scripts/create-report.mjs",
       "language": "javascript",
       "startLine": 504,
       "highlightLines": [505],
@@ -46,7 +46,7 @@
     {
       "type": "diff",
       "title": "Generated evidence diff",
-      "filePath": ".agents/skills/html-work-reports/scripts/create-report.mjs",
+      "filePath": ".codex/skills/html-work-reports/scripts/create-report.mjs",
       "startLine": 505,
       "content": "- return renderMarkdownOnly(input);\n+ return renderHtml(input);"
     },
@@ -86,7 +86,7 @@
     {
       "kind": "file",
       "label": "Generator script",
-      "value": ".agents/skills/html-work-reports/scripts/create-report.mjs",
+      "value": ".codex/skills/html-work-reports/scripts/create-report.mjs",
       "status": "info"
     },
     {

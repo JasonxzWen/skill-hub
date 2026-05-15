@@ -17,7 +17,7 @@ The goal is not to maximize skill count. The goal is to add only capabilities th
 1. Fetch or inspect the upstream source.
 2. Read the upstream README, skill files, plugin metadata, and license.
 3. Record the upstream commit or version.
-4. Compare the upstream capabilities against local skills in `.agents/skills/`, `.codex/skills/`, root `AGENTS.md`, and `docs/skill-routing.md`.
+4. Compare the upstream capabilities against local skills in `.codex/skills/`, `.codex/skills/`, root `AGENTS.md`, and `docs/skill-routing.md`.
 5. Decide one of:
    - **Install**: adds a materially new capability or a substantially better workflow.
    - **Adapt**: useful capability exists, but upstream assumes a different harness and needs Codex-specific changes.

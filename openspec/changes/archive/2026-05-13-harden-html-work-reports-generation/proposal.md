@@ -25,7 +25,7 @@
 
 ## Impact
 
-- `.agents/skills/html-work-reports/`: 更新 skill 契约、references、templates、components 和可能新增的生成脚本。
+- `.codex/skills/html-work-reports/`: 更新 skill 契约、references、templates、components 和可能新增的生成脚本。
 - `tests/htmlWorkReportsSkill.test.ts`: 从资产存在性检查扩展到生成/渲染/验证行为检查。
 - `docs/skill-routing.md`, `docs/capability-map.md`, `docs/codex-skill-feature-inventory.md`, `README.md`: 同步能力边界和使用场景。
 - 生成器和验证器作为 `html-work-reports` 内部资产，不在本次变更中升级为 installable capability。

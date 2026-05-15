@@ -353,18 +353,18 @@ Adds skill copies for different agent harnesses (e.g., Codex, Cursor, Antigravit
 **Frequency**: ~2 times per month
 
 **Steps**:
-1. Copy or adapt SKILL.md to .agents/skills/{skill}/SKILL.md and/or .cursor/skills/{skill}/SKILL.md
+1. Copy or adapt SKILL.md to .codex/skills/{skill}/SKILL.md and/or .cursor/skills/{skill}/SKILL.md
 2. Optionally add harness-specific openai.yaml or config files
 3. Address review feedback to align with CONTRIBUTING template
 
 **Files typically involved**:
-- `.agents/skills/*/SKILL.md`
+- `.codex/skills/*/SKILL.md`
 - `.cursor/skills/*/SKILL.md`
-- `.agents/skills/*/agents/openai.yaml`
+- `.codex/skills/*/agents/openai.yaml`
 
 **Example commit sequence**:
 ```
-Copy or adapt SKILL.md to .agents/skills/{skill}/SKILL.md and/or .cursor/skills/{skill}/SKILL.md
+Copy or adapt SKILL.md to .codex/skills/{skill}/SKILL.md and/or .cursor/skills/{skill}/SKILL.md
 Optionally add harness-specific openai.yaml or config files
 Address review feedback to align with CONTRIBUTING template
 ```
@@ -409,7 +409,7 @@ Addresses code review feedback by updating documentation, scripts, or configurat
 - `skills/*/SKILL.md`
 - `agents/*.md`
 - `commands/*.md`
-- `.agents/skills/*/SKILL.md`
+- `.codex/skills/*/SKILL.md`
 - `.cursor/skills/*/SKILL.md`
 
 **Example commit sequence**:
