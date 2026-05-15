@@ -1,6 +1,6 @@
 # Codex Skill Feature Inventory
 
-Date: 2026-05-14
+Date: 2026-05-15
 
 This document summarizes the functional surface worth adapting from famous Claude Code skill ecosystems into Codex-friendly skills.
 
@@ -34,6 +34,19 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Claude file tools | Use Codex native file read/edit tools and `apply_patch` for manual edits. |
 | Claude shell tool | Use Codex shell execution with sandbox and escalation rules. |
 | Claude slash commands | Prefer model-invoked skills; keep command shims only when they add real compatibility. |
+
+## P0: Codex Host Boundary
+
+Treat current Codex host capabilities as the baseline, not as gaps for Skill Hub to rebuild. Do not add Skill Hub features that merely duplicate native Codex skills/plugins, automations and thread wakeups, review/comment handling, browser or frontend inspection, remote/app-server control, or multi-agent orchestration.
+
+Skill Hub should add value where the behavior is portable, reviewable, or target-repo owned:
+
+- Reusable skill assets, rules, templates, and source/license records.
+- Lifecycle governance through analyze, install, status, update, and remove flows backed by managed ownership records.
+- Deterministic validation, readiness reports, capability metadata, and drift detection.
+- Cross-host adaptation notes for Codex, Claude Code, OpenCode, Cursor, Gemini, and similar agent hosts.
+
+When Codex internalizes a capability that Skill Hub already documents or adapts, first classify the existing surface as redundant, conflicting, or still useful as portable governance before changing implementation. Prefer documentation cleanup or explicit-only status over another wrapper around host-native UI or orchestration.
 
 ## ECC Codex Surface Installed Here
 
