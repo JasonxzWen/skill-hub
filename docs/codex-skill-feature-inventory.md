@@ -19,7 +19,7 @@ This document summarizes the functional surface worth adapting from famous Claud
 | Debugging | Use reproducible symptoms, hypotheses, root-cause tracing, fix verification, and regression tests. |
 | Code review | Review for behavior regressions, security risks, maintainability, and missing tests. `compound-code-review` provides the dedicated structured lane adapted from Compound Engineering `ce-code-review`. |
 | Completion verification | Run relevant tests/checks before declaring work done. |
-| HTML work reports | Generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions, reports, plans, reviews, research explainers, status dashboards, and lightweight editors. |
+| HTML work reports | Generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions, reports, plans, reviews, research explainers, status dashboards, and lightweight editors, with optional intent, claims, evidence, bounded charts, and browser acceptance checks. |
 | Feynman learning coach | Scope a learning target, teach from first principles, ask progressive diagnostic questions, require teach-back, and log learning events for future review. |
 | Skill Hub maintenance | Audit installed skill source versions, refresh eligible local adaptations, and evaluate new skill candidates against target-repo evidence instead of installing off-stack skills. |
 | Capability lifecycle CLI | Analyze target repos, recommend missing capabilities, install managed assets, report drift, and safely remove only Skill Hub-owned files. |

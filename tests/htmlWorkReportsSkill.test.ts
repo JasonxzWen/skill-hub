@@ -23,6 +23,9 @@ test('html-work-reports has a narrow trigger description', () => {
   expect(description.split(/\s+/).length).toBeLessThanOrEqual(50);
   expect(description).toContain('Chinese-first');
   expect(description).toContain('complete conclusion');
+  expect(description).toContain('completed implementation');
+  expect(description).toContain('OpenSpec');
+  expect(description).toContain('validation');
   expect(description).toContain('self-contained HTML report');
   expect(description).toContain('review');
   expect(description).toContain('architecture walkthrough');
@@ -35,6 +38,8 @@ test('html-work-reports has a narrow trigger description', () => {
 test('html-work-reports documents positive and negative trigger examples', () => {
   expect(skill).toContain('## Trigger Examples');
   expect(skill).toContain('completed implementation summary');
+  expect(skill).toContain('OpenSpec apply');
+  expect(skill).toContain('validation gates');
   expect(skill).toContain('HTML');
   expect(skill).toContain('review');
   expect(skill).toContain('JSON');
@@ -42,6 +47,31 @@ test('html-work-reports documents positive and negative trigger examples', () =>
   expect(skill).toContain('approval gates such as');
   expect(skill).toContain('work is still in progress');
   expect(skill).toContain('slide decks; use `frontend-slides`');
+});
+
+test('html-work-reports defaults to reporting after substantial implementation work', () => {
+  expect(skill).toContain('Default to this skill after substantial completed implementation');
+  expect(skill).toContain('OpenSpec apply');
+  expect(skill).toContain('validation-heavy review');
+  expect(skill).toContain('The user does not need to say "HTML"');
+});
+
+test('html-work-reports codifies decision-first briefing quality', () => {
+  const patterns = fs.readFileSync(`${skillDir}/references/html-report-patterns.md`, 'utf8');
+
+  expect(skill).toContain('BLUF');
+  expect(skill).toContain('SCQA');
+  expect(skill).toContain('Top 3');
+  expect(skill).toContain('事实 / 推断 / 假设');
+  expect(skill).toContain('CTA');
+  expect(skill).toContain('warning 是 advisory');
+  expect(patterns).toContain('Decision Briefing Contract');
+  expect(patterns).toContain('Pyramid');
+  expect(patterns).toContain('SCQA');
+  expect(patterns).toContain('fact / inference / assumption');
+  expect(patterns).toContain('decision-brief-scan');
+  expect(patterns).toContain('Warning Policy');
+  expect(patterns).toContain('warning != required fix');
 });
 
 test('html-work-reports keeps detailed patterns in references', () => {
@@ -85,11 +115,21 @@ test('html-work-reports ships reusable template and component assets', () => {
   expect(css).toContain('table-cell-highlight');
   expect(css).toContain('text-highlight');
   expect(css).toContain('mark.text-highlight');
+  expect(css).toContain('.supplemental-panel');
+  expect(css).toContain('.claim-card-header');
+  expect(css).toContain('.claim-card-title');
+  expect(css).toContain('scroll-margin-top');
+  expect(css).toContain('.panel:target');
+  expect(css).toContain('.section-focus');
   expect(js).toContain('data-filter-target');
   expect(js).toContain('data-tab-group');
   expect(js).toContain('data-copy-from');
+  expect(js).toContain('fallbackCopyText');
+  expect(js).toContain('data-copy-state');
   expect(js).toContain('data-report-data-table');
   expect(js).toContain('applyDataTableHighlight');
+  expect(js).toContain('highlightTargetSection');
+  expect(js).toContain('hashchange');
   expect(richCss).toContain('rendered-markdown');
   expect(richCss).toContain('rich-status');
   expect(richJs).toContain('marked');
@@ -116,6 +156,8 @@ test('html-work-reports emphasizes source-linked code evidence, diffs, and rende
   expect(patterns).toContain('source-linked code evidence');
   expect(patterns).toContain('diff');
   expect(patterns).toContain('Mermaid');
+  expect(patterns).toContain('Rich Content Opportunity');
+  expect(skill).toContain('当内容天然是流程、路由、调用链、命令、配置、代码或补丁证据时');
   expect(schema.properties.sections.items.properties.type.enum).toContain('diff');
   expect(css).toContain('evidence-spotlight');
   expect(css).toContain('source-link');
@@ -193,6 +235,244 @@ test('html-work-reports ships generator, validator, schema, and fixtures', () =>
   expect(schema.properties.sections.items.properties.status.enum).toContain('degraded');
 });
 
+test('html-work-reports schema keeps decision-quality fields optional', () => {
+  const schema = JSON.parse(fs.readFileSync(`${skillDir}/references/report-input-schema.json`, 'utf8'));
+
+  expect(schema.required).toEqual(['title', 'summary', 'status', 'sections']);
+  expect(schema.required).not.toContain('intent');
+  expect(schema.required).not.toContain('claims');
+  expect(schema.properties.intent.properties.audience.type).toBe('string');
+  expect(schema.properties.intent.properties.primaryQuestion.type).toBe('string');
+  expect(schema.properties.intent.properties.decision.type).toBe('string');
+  expect(schema.properties.intent.properties.timeBudget.type).toBe('string');
+  expect(schema.properties.intent.properties.artifactKind.enum).toEqual(expect.arrayContaining(['handoff', 'review', 'status', 'research', 'decision', 'explainer', 'editor']));
+  expect(schema.properties.intent.properties.successCriteria.items.type).toBe('string');
+  expect(schema.properties.claims.items.properties.evidenceIds.items.type).toBe('string');
+  expect(schema.properties.claims.items.properties.kind.enum).toEqual(expect.arrayContaining(['conclusion', 'risk', 'metric', 'trend', 'recommendation', 'assumption']));
+  expect(schema.properties.evidence.items.properties.id.type).toBe('string');
+  expect(schema.properties.evidence.items.properties.sourceUrl.type).toBe('string');
+  expect(schema.properties.evidence.items.properties.filePath.type).toBe('string');
+  expect(schema.properties.evidence.items.properties.line.minimum).toBe(1);
+  expect(schema.properties.evidence.items.properties.trustLevel.enum).toEqual(['trusted-generated', 'mixed-trust', 'untrusted']);
+
+  const section = schema.properties.sections.items.properties;
+  expect(section.type.enum).toContain('chart');
+  expect(section.trustLevel.enum).toEqual(['trusted-generated', 'mixed-trust', 'untrusted']);
+  expect(section.chart.properties.type.enum).toEqual(['bar', 'line', 'sparkline', 'bullet', 'slope', 'matrix']);
+  expect(section.chart.required).toEqual(['type', 'title', 'takeaway', 'data', 'encoding', 'source', 'altText', 'tableFallback']);
+});
+
+test('html-work-reports generator renders intent, claims, and accessible charts', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-work-report-decision-quality-'));
+  const result = spawnSync(process.execPath, [
+    createReportScript,
+    '--input',
+    `${skillDir}/assets/fixtures/chart-accessibility-stress-report.json`,
+    '--out-dir',
+    tmpDir,
+    '--slug',
+    'chart-accessibility-stress',
+    '--json',
+  ], { encoding: 'utf8' });
+
+  expect(result.status, result.stderr).toBe(0);
+  const payload = JSON.parse(result.stdout);
+  const html = fs.readFileSync(payload.outputPath, 'utf8');
+
+  expect(html).toContain('data-report-intent');
+  expect(html).toContain('data-primary-question=');
+  expect(html).toContain('data-time-budget="3m"');
+  expect(html).toContain('data-claim-id="claim-chart-contract"');
+  expect(html).toContain('data-claim-kind="conclusion"');
+  expect(html).toContain('href="#evidence-chart-fixture"');
+  expect(html).toContain('data-evidence-id="evidence-chart-fixture"');
+  expect(html).toContain('data-trust-level="mixed-trust"');
+  expect(html).toContain('data-chart-section');
+  expect(html).toContain('data-chart-type="bar"');
+  expect(html).toContain('data-chart-alt=');
+  expect(html).toContain('data-chart-source');
+  expect(html).toContain('data-chart-table-fallback');
+  expect(html).toContain('<figcaption');
+  expect(html).not.toContain('<canvas');
+  expect(html).not.toContain('javascript:');
+  expect(html).not.toContain('onerror=');
+
+  const validation = spawnSync(process.execPath, [
+    validateReportScript,
+    payload.outputPath,
+    '--json',
+    '--skip-browser',
+  ], { encoding: 'utf8' });
+  expect(validation.status, validation.stderr).toBe(0);
+  const validationPayload = JSON.parse(validation.stdout);
+  expect(validationPayload.ok).toBe(true);
+  expect(validationPayload.checks).toEqual(expect.arrayContaining([
+    'intent-metadata',
+    'claims-traceable',
+    'chart-accessibility',
+    'runtime-audit',
+    'safe-sinks',
+  ]));
+});
+
+test('html-work-reports trigger retrofit report keeps first screen compact and non-redundant', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-work-report-trigger-retro-'));
+  const result = spawnSync(process.execPath, [
+    createReportScript,
+    '--input',
+    `${skillDir}/assets/fixtures/trigger-scope-retro-report.json`,
+    '--out-dir',
+    tmpDir,
+    '--slug',
+    'trigger-retro',
+    '--json',
+  ], { encoding: 'utf8' });
+
+  expect(result.status, result.stderr).toBe(0);
+  const html = fs.readFileSync(JSON.parse(result.stdout).outputPath, 'utf8');
+
+  expect(html).toContain('class="hero-brief"');
+  expect(html).toContain('class="hero-decision-grid"');
+  expect(html).toContain('class="hero-stat-grid"');
+  expect(html).toContain('class="hero-criteria-list"');
+  expect(html).toContain('缺口在触发合同');
+  expect(html).toContain('class="report-nav-title">速览</div>');
+  expect(html).toContain('class="panel supplemental-panel" id="claims"');
+  expect(html).toContain('class="claim-card-header"');
+  expect(html).toContain('class="claim-card-title"');
+  expect(html).toContain('data-copy-from="#next-action-list"');
+  expect(html).toContain('data-render-mode="runtime-cdn"');
+  expect(html).toContain('data-section-type="mermaid"');
+  expect(html).toContain('data-rich-mermaid-target');
+  expect(html).toContain('data-section-type="code"');
+  expect(html).toContain('data-rich-code');
+  expect(html).toContain('language-yaml');
+  const navHtml = html.match(/<nav[\s\S]*?<\/nav>/)?.[0] || '';
+  const navLabels = [...navHtml.matchAll(/<span>([^<]+)<\/span>/g)].map((match) => match[1]);
+  expect(navLabels).toEqual(['触发合同修复', '触发决策链路', '触发描述证据', '验收信号', '边界不变', '关键判断', '证据', '验证', '下一步']);
+  expect(html).not.toContain('class="lede-grid"');
+  expect(html).not.toContain('<h2>结论</h2>');
+  expect(html).not.toContain('<h2>Claims</h2>');
+  expect(html).not.toContain('<div class="meta">结论</div><strong>结论：');
+  expect(html).not.toContain('<p class="meta">验证</p>\n      <h2>验证</h2>');
+  expect(html).not.toContain('<p class="meta">下一步</p>\n      <h2>下一步</h2>');
+});
+
+test('html-work-reports validator rejects navigation order mismatches', async () => {
+  const validateModule = await import(pathToFileURL(path.resolve(validateReportScript)).href);
+  const html = `<!doctype html>
+<html lang="zh-CN" data-html-work-report data-render-mode="pre-rendered" data-runtime-state="not-runtime">
+<head><meta charset="utf-8"><title>Navigation order fixture</title><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
+<body>
+  <main>
+    <header class="report-hero" data-report-intent data-primary-question="Does nav follow body?" data-time-budget="30s"><h1>Navigation order fixture</h1><p><strong>Conclusion exists.</strong></p></header>
+    <nav data-report-nav><div class="report-nav-group"><a data-nav-link href="#second">Second</a><a data-nav-link href="#first">First</a></div></nav>
+    <div class="report-section-stack">
+      <section id="first" data-section-type="summary" data-section-group="summary" data-render-state="ready"><h2>First</h2><p>First section.</p></section>
+      <section id="second" data-section-type="summary" data-section-group="summary" data-render-state="ready"><h2>Second</h2><p>Second section.</p></section>
+    </div>
+  </main>
+</body></html>`;
+
+  const result = validateModule.validateStatic(html);
+  expect(result.ok).toBe(false);
+  expect(result.issues.some((issue: string) => issue.startsWith('navigation-order:'))).toBe(true);
+});
+
+test('html-work-reports degrades unsupported charts and keeps untrusted content inert', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-work-report-unsupported-chart-'));
+  const inputPath = path.join(tmpDir, 'unsupported-chart.json');
+  fs.writeFileSync(inputPath, JSON.stringify({
+    title: 'Unsupported chart fallback',
+    summary: 'Unsupported charts should become an auditable table, not active content.',
+    status: 'review',
+    renderMode: 'pre-rendered',
+    sections: [
+      {
+        type: 'markdown',
+        title: 'Untrusted note',
+        trustLevel: 'untrusted',
+        content: '[bad](javascript:alert(1)) <img src=x onerror=alert(1)> <script>alert(1)</script>'
+      },
+      {
+        type: 'chart',
+        title: 'Pie request',
+        chart: {
+          type: 'pie',
+          title: 'Unsupported pie',
+          takeaway: 'Fallback table is the only output.',
+          data: [{ label: 'A', value: 1 }],
+          encoding: { label: 'label', value: 'value' },
+          source: { label: 'Fixture' },
+          altText: 'Unsupported pie chart request.',
+          tableFallback: {
+            columns: ['label', 'value'],
+            rows: [{ label: 'A', value: 1 }]
+          }
+        }
+      }
+    ]
+  }), 'utf8');
+
+  const result = spawnSync(process.execPath, [
+    createReportScript,
+    '--input',
+    inputPath,
+    '--out-dir',
+    tmpDir,
+    '--slug',
+    'unsupported-chart',
+    '--json',
+  ], { encoding: 'utf8' });
+
+  expect(result.status, result.stderr).toBe(0);
+  const html = fs.readFileSync(JSON.parse(result.stdout).outputPath, 'utf8');
+  expect(html).toContain('data-chart-degraded="unsupported-chart-type"');
+  expect(html).toContain('data-chart-table-fallback');
+  expect(html).toContain('data-trust-level="untrusted"');
+  expect(html).not.toContain('<canvas');
+  expect(html).not.toContain('javascript:');
+  expect(html).not.toContain('onerror=');
+  expect(html).not.toContain('<script>alert');
+});
+
+test('html-work-reports validator identifies unsupported important claims and chart defects', async () => {
+  const validateModule = await import(pathToFileURL(path.resolve(validateReportScript)).href);
+  const html = `<!doctype html>
+<html lang="zh-CN" data-html-work-report data-render-mode="pre-rendered" data-template="decision-matrix" data-runtime-state="not-runtime">
+<head><meta charset="utf-8"><title>Bad report</title><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
+<body>
+  <main class="report-shell">
+    <header class="report-hero" data-report-region="hero" data-report-intent data-primary-question="Should we ship?">
+      <h1 class="report-title">Bad report</h1>
+      <article><strong>Conclusion exists.</strong></article>
+    </header>
+    <div class="report-layout">
+      <nav data-report-nav><div class="report-nav-group"><a data-nav-link href="#claim">Claim</a></div></nav>
+      <div class="report-section-stack">
+        <section id="claim" data-section-type="claims" data-section-group="summary" data-section-status="ready" data-claim-id="claim-risk" data-claim-kind="risk">
+          <h2>Risk claim</h2><p>Important unsupported claim.</p>
+        </section>
+        <section id="chart" data-section-type="chart" data-section-group="main" data-section-status="ready" data-chart-section data-chart-type="bar">
+          <h2>Chart</h2><figure><div data-chart-visual></div></figure>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>`;
+
+  const result = validateModule.validateStatic(html);
+
+  expect(result.ok).toBe(false);
+  expect(result.issues).toEqual(expect.arrayContaining([
+    expect.stringContaining('claim claim-risk lacks evidence'),
+    expect.stringContaining('chart chart lacks alt text'),
+    expect.stringContaining('chart chart lacks table fallback'),
+    expect.stringContaining('chart chart lacks source metadata'),
+  ]));
+});
+
 test('html-work-reports data-table component renders hoverable row and column highlights', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-work-report-table-'));
   const result = spawnSync(process.execPath, [
@@ -251,9 +531,10 @@ test('html-work-reports validator emits non-blocking readability warnings', asyn
   const longCell = 'This table cell intentionally reads like a sentence with multiple clauses instead of a short phrase, so the validator can warn that table cells should stay concise.';
   const html = `<!doctype html>
 <html lang="zh-CN" data-html-work-report data-render-mode="pre-rendered">
-<head><meta charset="utf-8"><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
+<head><meta charset="utf-8"><title>Readability fixture</title><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
 <body>
   <main>
+    <header class="report-hero" data-report-intent data-primary-question="Is this readable?" data-time-budget="30s"><h1>Readability fixture</h1><p>Conclusion exists.</p></header>
     <nav data-report-nav><div class="report-nav-group"><a data-nav-link href="#summary">Summary</a></div></nav>
     <section id="summary" data-section-type="markdown" data-section-group="summary" data-render-state="ready" data-source-fallback>
       <div class="rendered-markdown">
@@ -275,6 +556,70 @@ test('html-work-reports validator emits non-blocking readability warnings', asyn
     expect.stringContaining('bullet too long'),
     expect.stringContaining('table cell too long'),
     expect.stringContaining('missing visual anchors'),
+  ]));
+});
+
+test('html-work-reports validator warns on weak decision brief structure', async () => {
+  const validateModule = await import(pathToFileURL(path.resolve(validateReportScript)).href);
+  const html = `<!doctype html>
+<html lang="zh-CN" data-html-work-report data-render-mode="pre-rendered" data-status="complete">
+<head><meta charset="utf-8"><title>Weak brief fixture</title><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
+<body>
+  <main>
+    <header class="report-hero" data-report-intent data-primary-question="What changed?" data-time-budget="30s">
+      <h1>Weak brief fixture</h1>
+      <p class="hero-summary-text">This update includes background, implementation notes, observations, context, and several possible interpretations before it eventually reaches the answer.</p>
+    </header>
+    <nav data-report-nav><div class="report-nav-group"><a data-nav-link href="#claims">Claims</a></div></nav>
+    <section id="claims" data-section-type="claims" data-section-group="claims" data-render-state="ready">
+      <article data-claim-id="c1" data-claim-kind="conclusion" data-claim-confidence="high" data-claim-evidence><h2>Claim 1</h2></article>
+      <article data-claim-id="c2" data-claim-kind="risk" data-claim-confidence="high" data-claim-evidence><h2>Claim 2</h2></article>
+      <article data-claim-id="c3" data-claim-kind="recommendation" data-claim-confidence="high" data-claim-evidence><h2>Claim 3</h2></article>
+      <article data-claim-id="c4" data-claim-kind="metric" data-claim-confidence="high" data-claim-evidence><h2>Claim 4</h2></article>
+    </section>
+  </main>
+</body>
+</html>`;
+
+  const result = validateModule.validateStatic(html);
+
+  expect(result.ok).toBe(true);
+  expect(result.checks).toContain('decision-brief-scan');
+  expect(result.warnings).toEqual(expect.arrayContaining([
+    expect.stringContaining('advisory: decision brief: lead with BLUF'),
+    expect.stringContaining('advisory: decision brief: keep top-level claims to 3 or fewer'),
+    expect.stringContaining('advisory: decision brief: add a next action or CTA'),
+  ]));
+});
+
+test('html-work-reports validator warns when rich rendering opportunities stay as prose', async () => {
+  const validateModule = await import(pathToFileURL(path.resolve(validateReportScript)).href);
+  const html = `<!doctype html>
+<html lang="zh-CN" data-html-work-report data-render-mode="pre-rendered">
+<head><meta charset="utf-8"><title>Rich opportunity fixture</title><style>@media (prefers-reduced-motion: reduce) { * { transition: none; } }</style></head>
+<body>
+  <main>
+    <header class="report-hero" data-report-intent data-primary-question="Should this report use rich rendering?" data-time-budget="30s"><h1>Rich opportunity fixture</h1><p><strong>Conclusion exists.</strong></p></header>
+    <nav data-report-nav><div class="report-nav-group"><a data-nav-link href="#summary">Summary</a><a data-nav-link href="#evidence">Evidence</a></div></nav>
+    <section id="summary" data-section-type="summary" data-section-group="summary" data-render-state="ready">
+      <h2>Summary</h2>
+      <p><strong>Flow evidence:</strong> the trigger routing path moves from completed OpenSpec work to the html-work-reports handoff and then to browser validation.</p>
+    </section>
+    <section id="evidence" data-section-type="evidence" data-section-group="evidence" data-render-state="ready">
+      <h2>Evidence</h2>
+      <article data-evidence data-evidence-kind="file" data-file-path=".codex/skills/html-work-reports/SKILL.md" data-line="3">.codex/skills/html-work-reports/SKILL.md:3</article>
+    </section>
+  </main>
+</body>
+</html>`;
+
+  const result = validateModule.validateStatic(html);
+
+  expect(result.ok).toBe(true);
+  expect(result.checks).toContain('rich-content-opportunity-scan');
+  expect(result.warnings).toEqual(expect.arrayContaining([
+    expect.stringContaining('advisory: rich content opportunity: consider Mermaid'),
+    expect.stringContaining('advisory: rich content opportunity: consider code or diff'),
   ]));
 });
 
@@ -446,7 +791,7 @@ test('html-work-reports keeps optional modules out of concise reports', () => {
         title: '结论',
         group: 'summary',
         status: 'ready',
-        content: '- 默认目录按内容分组。\n- 没有明确需要时，不展示代码、图表、证据、验证或下一步。'
+        content: '- 导航按正文阅读顺序排列。\n- 没有明确需要时，不展示代码、图表、证据、验证或下一步。'
       }
     ]
   }), 'utf8');
@@ -468,7 +813,10 @@ test('html-work-reports keeps optional modules out of concise reports', () => {
   const nav = html.match(/<nav[\s\S]*?<\/nav>/)?.[0] || '';
 
   expect(html).toContain('简洁中文汇报');
-  expect(nav).toContain('摘要');
+  expect(nav).toContain('data-nav-order="dom"');
+  expect(nav).toContain('阅读顺序');
+  expect(nav).toContain('结论');
+  expect(nav).toContain('data-nav-group-name="summary"');
   expect(nav).not.toContain('图表');
   expect(nav).not.toContain('代码');
   expect(nav).not.toContain('证据');
@@ -580,7 +928,7 @@ test('html-work-reports emits Chinese UTF-8 output and rejects mojibake', () => 
   const html = fs.readFileSync(JSON.parse(result.stdout).outputPath, 'utf8');
   expect(html).toContain('<html lang="zh-CN"');
   expect(html).toContain('中文汇报质量检查');
-  expect(html).toContain('目录');
+  expect(html).toContain('速览');
   expect(html).toContain('结论');
   expect(html).not.toContain('生成时间');
   expect(html).not.toMatch(/\?{4,}/);

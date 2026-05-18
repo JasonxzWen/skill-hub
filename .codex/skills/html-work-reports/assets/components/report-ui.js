@@ -1,34 +1,80 @@
 /* Use case: small local interactions for self-contained HTML work reports. The generator inlines this into the final <script> block. */
 (function () {
-  function copyText(text, button) {
-    if (!text) return;
-    var done = function () {
-      if (!button) return;
-      var previous = button.textContent;
-      button.textContent = "已复制";
-      setTimeout(function () {
-        button.textContent = previous;
-      }, 900);
-    };
+  var sectionFocusTimer = null;
+  var lastActiveNavId = "";
 
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(done, function () {});
-      return;
+  function setCopyButtonState(button, label, state) {
+    if (!button) return;
+    if (!button.getAttribute("data-copy-label")) {
+      button.setAttribute("data-copy-label", button.textContent);
     }
+    if (button.getAttribute("data-copy-timer")) {
+      clearTimeout(Number(button.getAttribute("data-copy-timer")));
+    }
+    button.textContent = label;
+    button.setAttribute("data-copy-state", state);
+    button.setAttribute("aria-live", "polite");
+    var timer = setTimeout(function () {
+      button.textContent = button.getAttribute("data-copy-label") || label;
+      button.removeAttribute("data-copy-state");
+      button.removeAttribute("data-copy-timer");
+    }, 1100);
+    button.setAttribute("data-copy-timer", String(timer));
+  }
 
+  function fallbackCopyText(text) {
     var area = document.createElement("textarea");
     area.value = text;
     area.setAttribute("readonly", "");
     area.style.position = "fixed";
+    area.style.left = "-1000px";
+    area.style.top = "0";
     area.style.opacity = "0";
     document.body.appendChild(area);
+    area.focus();
     area.select();
+    area.setSelectionRange(0, area.value.length);
     try {
-      document.execCommand("copy");
-      done();
+      return document.execCommand("copy");
     } finally {
       document.body.removeChild(area);
     }
+  }
+
+  function copyText(text, button) {
+    var value = String(text || "").trim();
+    if (!value) {
+      setCopyButtonState(button, "无内容", "empty");
+      return;
+    }
+    var done = function () {
+      setCopyButtonState(button, "已复制", "success");
+    };
+    var fail = function () {
+      setCopyButtonState(button, "复制失败", "failed");
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(value).then(done, function () {
+        if (fallbackCopyText(value)) done();
+        else fail();
+      });
+      return;
+    }
+
+    if (fallbackCopyText(value)) done();
+    else fail();
+  }
+
+  function copySourceText(source) {
+    if (!source) return "";
+    if (source.matches("ul, ol")) {
+      return Array.prototype.slice.call(source.querySelectorAll("li"))
+        .map(function (item) { return "- " + (item.innerText || item.textContent || "").trim(); })
+        .filter(Boolean)
+        .join("\n");
+    }
+    return (source.innerText || source.textContent || "").trim();
   }
 
   function applyFilter(button) {
@@ -110,22 +156,93 @@
     cell.classList.add("table-cell-highlight");
   }
 
+  function hashTargetId() {
+    if (!window.location.hash || window.location.hash === "#") return "";
+    var raw = window.location.hash.slice(1);
+    try {
+      return decodeURIComponent(raw);
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  function reportSectionForId(id) {
+    if (!id) return null;
+    var target = document.getElementById(id);
+    if (!target) return null;
+    if (target.matches("[id][data-section-type], #evidence, #verification, #next-actions")) {
+      return target;
+    }
+    return target.closest("[id][data-section-type], #evidence, #verification, #next-actions");
+  }
+
+  function sectionIsVisible(section) {
+    if (!section) return false;
+    var rect = section.getBoundingClientRect();
+    return rect.bottom > 80 && rect.top < window.innerHeight;
+  }
+
+  function highlightTargetSection(id) {
+    document.querySelectorAll(".section-focus").forEach(function (section) {
+      section.classList.remove("section-focus");
+    });
+    if (sectionFocusTimer) {
+      clearTimeout(sectionFocusTimer);
+      sectionFocusTimer = null;
+    }
+
+    var section = reportSectionForId(id);
+    if (!section) return;
+    section.classList.add("section-focus");
+    sectionFocusTimer = setTimeout(function () {
+      section.classList.remove("section-focus");
+      sectionFocusTimer = null;
+    }, 1600);
+  }
+
   function updateActiveNavigation() {
     var sections = Array.prototype.slice.call(document.querySelectorAll("[id][data-section-type], #evidence, #verification, #next-actions"));
+    var hashSection = reportSectionForId(hashTargetId());
     var active = sections
       .map(function (section) {
         var rect = section.getBoundingClientRect();
-        return { id: section.id, top: Math.abs(rect.top - 96), visible: rect.bottom > 80 && rect.top < window.innerHeight };
+        return { id: section.id, section: section, top: Math.abs(rect.top - 96), visible: sectionIsVisible(section) };
       })
       .filter(function (item) { return item.visible; })
       .sort(function (a, b) { return a.top - b.top; })[0];
+    if (hashSection && sectionIsVisible(hashSection)) {
+      active = { id: hashSection.id, section: hashSection, top: 0, visible: true };
+    }
 
+    var activeLink = null;
     document.querySelectorAll("[data-nav-link]").forEach(function (link) {
-      link.setAttribute("aria-current", active && link.getAttribute("href") === "#" + active.id ? "true" : "false");
+      var isActive = Boolean(active && link.getAttribute("href") === "#" + active.id);
+      link.setAttribute("aria-current", isActive ? "true" : "false");
+      if (isActive) activeLink = link;
     });
+
+    if (active && active.id !== lastActiveNavId && activeLink && activeLink.scrollIntoView) {
+      try {
+        activeLink.scrollIntoView({ block: "nearest", inline: "nearest" });
+      } catch (_) {
+        activeLink.scrollIntoView();
+      }
+    }
+    lastActiveNavId = active ? active.id : "";
   }
 
   document.addEventListener("click", function (event) {
+    var navLink = event.target.closest("[data-nav-link]");
+    if (navLink) {
+      var href = navLink.getAttribute("href") || "";
+      if (href.charAt(0) === "#") {
+        window.setTimeout(function () {
+          highlightTargetSection(hashTargetId());
+          updateActiveNavigation();
+        }, 80);
+      }
+    }
+
     var button = event.target.closest("button");
     if (!button) return;
 
@@ -135,7 +252,7 @@
 
     if (button.matches("[data-copy-from]")) {
       var source = document.querySelector(button.getAttribute("data-copy-from"));
-      copyText(source ? (source.content ? source.content.textContent : source.textContent) : "", button);
+      copyText(source ? (source.content ? source.content.textContent : copySourceText(source)) : "", button);
     }
 
     if (button.matches("[data-filter-target][data-filter-value]")) {
@@ -189,5 +306,10 @@
 
   document.addEventListener("scroll", updateActiveNavigation, { passive: true });
   window.addEventListener("resize", updateActiveNavigation);
+  window.addEventListener("hashchange", function () {
+    highlightTargetSection(hashTargetId());
+    updateActiveNavigation();
+  });
+  highlightTargetSection(hashTargetId());
   updateActiveNavigation();
 })();

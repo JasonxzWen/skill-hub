@@ -118,6 +118,159 @@ function collectReadabilityWarnings(documentMarkup) {
   return warnings;
 }
 
+function collectDecisionBriefWarnings(documentMarkup) {
+  const warnings = [];
+  const hero = documentMarkup.match(/<header\b(?=[^>]*report-hero)[\s\S]*?<\/header>/i)?.[0] || "";
+  const summaryBlock = hero.match(/<p\b(?=[^>]*hero-summary-text)[^>]*>[\s\S]*?<\/p>/i)?.[0]
+    || hero.match(/<p\b[^>]*>[\s\S]*?<\/p>/i)?.[0]
+    || "";
+  const summaryText = textFromHtml(summaryBlock);
+  const blufPattern = /^(?:结论|判断|决定|建议|风险|状态|完成|通过|阻塞|需要|已|未|可以|不能|Conclusion|Decision|Recommendation|Status|Done|Blocked)\b|^(?:\*\*)?(?:结论|判断|决定|建议|风险|状态)[：:]/i;
+  const claimIds = new Set([...documentMarkup.matchAll(/data-claim-id="([^"]+)"/gi)].map((match) => match[1]));
+  const hasNextAction = /id="next-actions"|data-section-type="actions"|data-copy-from="#next-action-list"/i.test(documentMarkup);
+
+  if (!summaryText || summaryText.length > 90 || !blufPattern.test(summaryText)) {
+    warnings.push("advisory: decision brief: lead with BLUF in the first sentence and keep it under 90 chars");
+  }
+
+  if (claimIds.size > 3) {
+    warnings.push(`advisory: decision brief: keep top-level claims to 3 or fewer; found ${claimIds.size}`);
+  }
+
+  if (!hasNextAction) {
+    warnings.push("advisory: decision brief: add a next action or CTA when the report is a handoff, review, or status decision");
+  }
+
+  return warnings;
+}
+
+function collectRichContentOpportunityWarnings(documentMarkup) {
+  const warnings = [];
+  const text = textFromHtml(documentMarkup);
+  const lower = text.toLowerCase();
+  const hasMermaid = documentMarkup.includes('data-section-type="mermaid"');
+  const hasCodeOrDiff = /data-section-type="(?:code|diff)"/.test(documentMarkup);
+  const flowTerms = [
+    "流程", "链路", "路由", "触发", "调用", "架构", "数据流", "状态机", "依赖关系", "决策链路",
+    "flow", "workflow", "routing", "route", "trigger", "call path", "sequence", "architecture", "data-flow", "pipeline", "state machine"
+  ];
+  const fileLinePattern = /(?:^|[\s>(])(?:\.{1,2}\/|[A-Za-z0-9_.-]+\/)[A-Za-z0-9_./-]+\.(?:ts|tsx|js|jsx|mjs|cjs|md|json|css|html|py|ps1|yml|yaml|toml|rs|go|java|cs|cpp|h):\d+\b/;
+  const hasFileLineEvidence = /data-file-path="[^"]+"/i.test(documentMarkup) && /data-line="\d+"/i.test(documentMarkup)
+    || /data-source-link/i.test(documentMarkup)
+    || fileLinePattern.test(text);
+
+  if (!hasMermaid && flowTerms.some((term) => lower.includes(term.toLowerCase()))) {
+    warnings.push("advisory: rich content opportunity: consider Mermaid only when flow, routing, call-path, architecture, or trigger sequences would be faster than prose");
+  }
+
+  if (!hasCodeOrDiff && hasFileLineEvidence) {
+    warnings.push("advisory: rich content opportunity: consider code or diff only when file-and-line evidence is central to the report");
+  }
+
+  return warnings;
+}
+
+function attrValue(tag, name) {
+  const match = String(tag || "").match(new RegExp(`${name}="([^"]*)"`, "i"));
+  return match ? match[1] : "";
+}
+
+function normalizeFragmentId(value) {
+  return String(value || "")
+    .replace(/^#/, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+function collectNavigationOrderIssues(documentMarkup) {
+  const issues = [];
+  const nav = documentMarkup.match(/<nav\b(?=[^>]*data-report-nav)[\s\S]*?<\/nav>/i)?.[0] || "";
+  if (!nav) return issues;
+
+  const navIds = [...nav.matchAll(/<a\b(?=[^>]*data-nav-link)[^>]*href="([^"]+)"/gi)]
+    .map((match) => normalizeFragmentId(match[1]))
+    .filter(Boolean);
+  if (navIds.length === 0) return issues;
+
+  const sectionIds = [...documentMarkup.matchAll(/<section\b[^>]*>/gi)]
+    .map((match) => match[0])
+    .filter((tag) => tag.includes("data-section-type=") || /id="(?:evidence|verification|next-actions)"/i.test(tag))
+    .map((tag) => attrValue(tag, "id"))
+    .filter(Boolean);
+  const sectionIdSet = new Set(sectionIds);
+  const missingTargets = navIds.filter((id) => !sectionIdSet.has(id));
+  if (missingTargets.length > 0) {
+    issues.push(`navigation links target missing sections: ${missingTargets.slice(0, 5).join(", ")}`);
+  }
+
+  const navOrder = navIds.filter((id) => sectionIdSet.has(id));
+  const bodyOrder = sectionIds.filter((id) => navIds.includes(id));
+  if (navOrder.length > 1 && bodyOrder.length > 1 && navOrder.join(" > ") !== bodyOrder.join(" > ")) {
+    issues.push(`navigation order differs from body order (nav: ${navOrder.join(" > ")}; body: ${bodyOrder.join(" > ")})`);
+  }
+
+  return issues;
+}
+
+function collectClaimIssues(documentMarkup) {
+  const issues = [];
+  const claimBlocks = [...documentMarkup.matchAll(/<([a-z0-9]+)\b[^>]*data-claim-id="([^"]*)"[^>]*>[\s\S]*?(?:<\/\1>|$)/gi)];
+  const importantKinds = new Set(["conclusion", "metric", "trend", "risk", "recommendation"]);
+  for (const match of claimBlocks) {
+    const block = match[0];
+    const opening = block.match(/^<[^>]+>/)?.[0] || "";
+    const id = attrValue(opening, "data-claim-id") || textFromHtml(block).slice(0, 60) || "unknown";
+    const kind = attrValue(opening, "data-claim-kind") || "conclusion";
+    const confidence = attrValue(opening, "data-claim-confidence");
+    if (importantKinds.has(kind) && confidence !== "low" && !block.includes("data-claim-evidence")) {
+      issues.push(`claim ${id} lacks evidence for ${kind}`);
+    }
+  }
+  return issues;
+}
+
+function collectChartIssues(documentMarkup) {
+  const issues = [];
+  const chartSections = [...documentMarkup.matchAll(/<section\b(?=[^>]*data-chart-section)([\s\S]*?)<\/section>/gi)];
+  for (const match of chartSections) {
+    const block = match[0];
+    const opening = block.match(/^<section\b[^>]*>/i)?.[0] || "";
+    const id = attrValue(opening, "id") || attrValue(opening, "data-chart-type") || "unknown";
+    if (!attrValue(opening, "data-chart-alt")) issues.push(`chart ${id} lacks alt text`);
+    if (!block.includes("data-chart-takeaway")) issues.push(`chart ${id} lacks textual takeaway`);
+    if (!block.includes("data-chart-source")) issues.push(`chart ${id} lacks source metadata`);
+    if (!block.includes("data-chart-table-fallback")) issues.push(`chart ${id} lacks table fallback`);
+    if (block.includes("data-chart-visual") && !block.includes("data-chart-table-fallback")) {
+      issues.push(`chart ${id} requires hover or visual-only data`);
+    }
+  }
+  return issues;
+}
+
+function collectRuntimeAuditIssues(documentMarkup) {
+  const issues = [];
+  const dependencyTags = [...documentMarkup.matchAll(/<article\b[^>]*data-runtime-dependency="[^"]+"[^>]*>/gi)].map((match) => match[0]);
+  for (const tag of dependencyTags) {
+    const id = attrValue(tag, "data-runtime-dependency") || "unknown";
+    const version = attrValue(tag, "data-runtime-dependency-version");
+    const url = attrValue(tag, "data-runtime-dependency-url");
+    const integrity = attrValue(tag, "data-runtime-dependency-integrity");
+    const exemption = attrValue(tag, "data-runtime-dependency-integrity-exemption");
+    if (!version || !url) issues.push(`runtime dependency ${id} is not pinned`);
+    if (!integrity && !exemption) issues.push(`runtime dependency ${id} lacks integrity metadata or exemption`);
+  }
+  return issues;
+}
+
+function hasSafeSinks(html) {
+  return !/javascript:/i.test(html)
+    && !/\son[a-z]+\s*=/i.test(html)
+    && !/<script>\s*alert/i.test(html)
+    && !/<canvas\b/i.test(html);
+}
+
 function validateStatic(html) {
   const checks = [];
   const issues = [];
@@ -131,14 +284,23 @@ function validateStatic(html) {
   const hasDataTable = html.includes('data-section-type="data-table"');
   const hasInteractiveControls = /<(button|input|select)[^>]+data-(filter-target|tab-group|copy-from|copy-text|search-for)/.test(documentMarkup);
   const warnings = collectReadabilityWarnings(documentMarkup);
+  warnings.push(...collectDecisionBriefWarnings(documentMarkup));
+  warnings.push(...collectRichContentOpportunityWarnings(documentMarkup));
 
   add(checks, "report-root", html.includes("data-html-work-report"), "missing data-html-work-report root", issues);
   add(checks, "render-mode", ["runtime-cdn", "pre-rendered", "fallback-only"].includes(mode), `unexpected render mode: ${mode}`, issues);
   add(checks, "non-empty", html.trim().length > 500, "report appears empty or too small", issues);
   add(checks, "utf8-mojibake-free", !hasLikelyMojibake(html), "likely mojibake detected; ensure report input is UTF-8 and contains no continuous half-width question marks", issues);
+  add(checks, "semantic-structure", /<html\b[^>]*lang=/i.test(html) && /<title>[^<]+<\/title>/i.test(html) && /<main\b/i.test(html) && /<h1\b/i.test(html), "missing title, language, main landmark, or h1", issues);
   add(checks, "safe-content", !/javascript:/i.test(html) && !/onerror=/i.test(html) && !/<script>\s*alert/i.test(html), "unsafe script, handler, or protocol found", issues);
+  add(checks, "safe-sinks", hasSafeSinks(html), "unsafe script, handler, protocol, or active canvas sink found", issues);
   add(checks, "grouped-navigation", html.includes("data-report-nav") && html.includes("report-nav-group") && html.includes("data-nav-link"), "missing grouped navigation", issues);
+  const navigationOrderIssues = collectNavigationOrderIssues(documentMarkup);
+  add(checks, "navigation-order", navigationOrderIssues.length === 0, navigationOrderIssues.join("; "), issues);
+  checks.push("decision-brief-scan");
+  checks.push("rich-content-opportunity-scan");
   add(checks, "section-groups", html.includes("data-section-group="), "sections lack group metadata", issues);
+  add(checks, "intent-metadata", html.includes("data-report-intent") && html.includes("data-primary-question=") && html.includes("data-time-budget="), "missing report intent metadata", issues);
   if (hasRichSections) add(checks, "source-fallbacks", html.includes("data-source-fallback"), "rich sections lack source fallback markers", issues);
   add(checks, "render-states", html.includes("data-render-state=") || html.includes("data-runtime-state="), "missing render state metadata", issues);
 
@@ -205,11 +367,17 @@ function validateStatic(html) {
   if (hasEvidenceSection) add(checks, "evidence-present", html.includes("data-evidence") && html.includes("data-evidence-kind="), "missing evidence blocks", issues);
   if (hasVerificationSection) add(checks, "verification-present", html.includes("data-verification-status="), "missing verification status blocks", issues);
   if (hasInteractiveControls) add(checks, "interactive-controls", true, "", issues);
+  const claimIssues = collectClaimIssues(documentMarkup);
+  if (html.includes("data-claim-id=")) add(checks, "claims-traceable", claimIssues.length === 0, claimIssues.join("; "), issues);
+  const chartIssues = collectChartIssues(documentMarkup);
+  if (html.includes("data-chart-section")) add(checks, "chart-accessibility", chartIssues.length === 0, chartIssues.join("; "), issues);
   add(checks, "responsive-motion", html.includes("prefers-reduced-motion"), "missing reduced-motion CSS", issues);
 
   if (runtime) {
+    const runtimeAuditIssues = collectRuntimeAuditIssues(documentMarkup);
     add(checks, "runtime-pins", runtimePins, "runtime-cdn mode does not declare pinned dependencies", issues);
     add(checks, "runtime-dependency-manifest", html.includes("data-runtime-dependencies"), "missing runtime dependency manifest", issues);
+    add(checks, "runtime-audit", runtimeAuditIssues.length === 0, runtimeAuditIssues.join("; "), issues);
   } else if (mode === "pre-rendered") {
     add(checks, "self-contained-primary", !html.includes("https://cdn.jsdelivr.net"), "pre-rendered report includes CDN dependency", issues);
   }
@@ -615,24 +783,179 @@ async function inspectDataTablesCdp(client) {
 }
 
 async function exerciseInteractionsCdp(client) {
+  await evaluate(
+    client,
+    `(async () => {
+      window.__htmlWorkReportInteractionCheck = {};
+      document.querySelectorAll("[data-filter-target][data-filter-value]")[1]?.click();
+      document.querySelectorAll("[data-tab-group][data-tab]")[1]?.click();
+      const navLinks = Array.from(document.querySelectorAll("[data-nav-link]"));
+      const navTarget = navLinks[Math.min(3, navLinks.length - 1)] || navLinks[0] || null;
+      navTarget?.click();
+      await new Promise((resolve) => setTimeout(resolve, 220));
+      const navTargetId = (navTarget?.getAttribute("href") || "").replace(/^#/, "");
+      const activeNavTarget = (document.querySelector('[data-nav-link][aria-current="true"]')?.getAttribute("href") || "").replace(/^#/, "");
+      window.__htmlWorkReportInteractionCheck = {
+        navTargetId,
+        activeNavTarget,
+        focusedSections: Array.from(document.querySelectorAll(".section-focus")).map((node) => node.id)
+      };
+      return true;
+    })()`,
+    5000
+  );
+
+  const copyTarget = await evaluate(
+    client,
+    `(async () => {
+      const visible = (node) => {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      };
+      const copyButton = Array.from(document.querySelectorAll("[data-copy-from], [data-copy-text]")).find(visible);
+      if (!copyButton) return { exists: false, copyHasSource: false };
+      const copySource = copyButton.matches("[data-copy-from]")
+        ? document.querySelector(copyButton.getAttribute("data-copy-from"))
+        : null;
+      const copyHasSource = Boolean(copyButton.matches("[data-copy-text]") ? copyButton.getAttribute("data-copy-text") : copySource?.textContent?.trim());
+      copyButton.scrollIntoView({ block: "center", inline: "center", behavior: "instant" });
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      const rect = copyButton.getBoundingClientRect();
+      return {
+        exists: rect.width > 0 && rect.height > 0,
+        copyHasSource,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      };
+    })()`,
+    5000
+  );
+
+  if (copyTarget.exists) {
+    await client.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: copyTarget.x, y: copyTarget.y }).catch(() => {});
+    await client.send("Input.dispatchMouseEvent", { type: "mousePressed", x: copyTarget.x, y: copyTarget.y, button: "left", buttons: 1, clickCount: 1 }).catch(() => {});
+    await client.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: copyTarget.x, y: copyTarget.y, button: "left", buttons: 0, clickCount: 1 }).catch(() => {});
+    await delay(360);
+    const copied = await evaluate(client, `(() => {
+      const visible = (node) => {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      };
+      const copyButton = Array.from(document.querySelectorAll("[data-copy-from], [data-copy-text]")).find(visible);
+      return copyButton?.getAttribute("data-copy-state") === "success";
+    })()`, 1000).catch(() => false);
+    if (!copied) {
+      await evaluate(client, `(() => {
+        const visible = (node) => {
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+        };
+        Array.from(document.querySelectorAll("[data-copy-from], [data-copy-text]")).find(visible)?.focus();
+      })()`, 1000).catch(() => {});
+      await client.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 }).catch(() => {});
+      await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 }).catch(() => {});
+      await delay(360);
+    }
+  }
+
   return await evaluate(
     client,
     `(() => {
-      document.querySelectorAll("[data-filter-target][data-filter-value]")[1]?.click();
-      document.querySelectorAll("[data-tab-group][data-tab]")[1]?.click();
-      document.querySelector("[data-nav-link]")?.click();
       const title = document.querySelector(".report-title, h1");
       const evidence = document.querySelector("#evidence");
+      const saved = window.__htmlWorkReportInteractionCheck || {};
       const isVisible = (node) => {
         if (!node) return true;
         const rect = node.getBoundingClientRect();
         const style = getComputedStyle(node);
         return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
       };
+      const copyButton = Array.from(document.querySelectorAll("[data-copy-from], [data-copy-text]")).find(isVisible);
       return {
         hiddenPanels: document.querySelectorAll("[data-tab-panel-group][hidden], [data-filter-target][hidden]").length,
         titleVisible: isVisible(title),
-        evidenceVisible: isVisible(evidence)
+        evidenceVisible: isVisible(evidence),
+        navTargetId: saved.navTargetId || "",
+        activeNavTarget: saved.activeNavTarget || "",
+        focusedSections: saved.focusedSections || [],
+        copyHasSource: ${copyTarget.copyHasSource ? "true" : "false"},
+        copyState: copyButton?.getAttribute("data-copy-state") || "",
+        copyLabel: copyButton?.textContent?.trim() || ""
+      };
+    })()`,
+    5000
+  );
+}
+
+async function inspectAccessibilityCdp(client) {
+  for (let index = 0; index < 4; index += 1) {
+    await client.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: "Tab",
+      code: "Tab",
+      windowsVirtualKeyCode: 9
+    }).catch(() => {});
+    await client.send("Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key: "Tab",
+      code: "Tab",
+      windowsVirtualKeyCode: 9
+    }).catch(() => {});
+    await delay(80);
+    const hasFocus = await evaluate(client, `(() => document.activeElement && document.activeElement !== document.body)()`, 1000).catch(() => false);
+    if (hasFocus) break;
+  }
+
+  return await evaluate(
+    client,
+    `(() => {
+      const isVisible = (node) => {
+        if (!node) return false;
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      };
+      const labelOf = (node) => (node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || node.value || "").trim();
+      const controls = Array.from(document.querySelectorAll("button,input,select,summary,a[href],[tabindex]")).filter(isVisible);
+      const unlabeledControls = controls
+        .filter((node) => !labelOf(node))
+        .slice(0, 6)
+        .map((node) => node.id ? "#" + node.id : node.tagName.toLowerCase());
+      const active = document.activeElement;
+      const activeStyle = active ? getComputedStyle(active) : null;
+      const focusVisible = Boolean(active && active !== document.body && activeStyle && (
+        activeStyle.boxShadow !== "none" ||
+        (activeStyle.outlineStyle && activeStyle.outlineStyle !== "none" && Number.parseFloat(activeStyle.outlineWidth || "0") > 0)
+      ));
+      const reducedMotionRule = Array.from(document.querySelectorAll("style")).some((style) => style.textContent.includes("prefers-reduced-motion"));
+      const primaryConclusionVisible = isVisible(document.querySelector(".report-hero strong, .report-hero [data-report-intent]"));
+      const chartIssues = Array.from(document.querySelectorAll("[data-chart-section]")).flatMap((section) => {
+        const issues = [];
+        const id = section.id || section.dataset.chartType || "chart";
+        const rect = section.getBoundingClientRect();
+        const figure = section.querySelector("figure");
+        const fallback = section.querySelector("[data-chart-table-fallback]");
+        const takeaway = section.querySelector("[data-chart-takeaway]");
+        const source = section.querySelector("[data-chart-source]");
+        if (!figure || !isVisible(figure)) issues.push(id + " chart figure is not visible");
+        if (!fallback) issues.push(id + " chart fallback is missing");
+        if (!takeaway || !takeaway.textContent.trim()) issues.push(id + " chart takeaway is missing");
+        if (!source || !source.textContent.trim()) issues.push(id + " chart source is missing");
+        if (section.scrollWidth - section.clientWidth > 4) issues.push(id + " chart section overflows horizontally");
+        if (rect.width <= 0 || rect.height <= 0) issues.push(id + " chart section is blank");
+        return issues;
+      });
+      return {
+        controlCount: controls.length,
+        unlabeledControls,
+        focusVisible,
+        activeTag: active ? active.tagName.toLowerCase() : "",
+        reducedMotionRule,
+        primaryConclusionVisible,
+        chartIssues
       };
     })()`,
     5000
@@ -661,6 +984,7 @@ async function validateBrowserWithCdp(file, mode) {
     const code = await inspectCodeCdp(client);
     const dataTables = await inspectDataTablesCdp(client);
     const interactions = await exerciseInteractionsCdp(client);
+    const accessibility = await inspectAccessibilityCdp(client);
 
     const issues = [];
     for (const viewport of viewports) {
@@ -691,12 +1015,20 @@ async function validateBrowserWithCdp(file, mode) {
     }
     if (mode === "runtime-cdn" && code.length > 0 && totalHighlightTokens === 0) issues.push("runtime code blocks are ready without highlight tokens");
     if (!interactions.titleVisible || !interactions.evidenceVisible) issues.push("interactions hid primary title or evidence");
+    if (interactions.navTargetId && interactions.activeNavTarget !== interactions.navTargetId) issues.push(`nav click did not activate ${interactions.navTargetId}`);
+    if (interactions.navTargetId && !interactions.focusedSections?.includes(interactions.navTargetId)) issues.push(`nav click did not highlight ${interactions.navTargetId}`);
+    if (interactions.copyHasSource && interactions.copyState !== "success") issues.push(`copy button did not report success; label=${interactions.copyLabel || "empty"}`);
+    if (accessibility.unlabeledControls?.length) issues.push(`unlabeled controls: ${accessibility.unlabeledControls.join(", ")}`);
+    if (accessibility.controlCount > 0 && !accessibility.focusVisible) issues.push(`focus-visible style was not detected after keyboard Tab; active=${accessibility.activeTag || "none"}`);
+    if (!accessibility.reducedMotionRule) issues.push("reduced-motion CSS was not detected in browser");
+    if (!accessibility.primaryConclusionVisible) issues.push("primary conclusion is not visible before interaction");
+    if (accessibility.chartIssues?.length) issues.push(accessibility.chartIssues.join(" | "));
     if (mode === "runtime-cdn" && runtime.pending > 0) issues.push(`runtime still pending for ${runtime.pending} sections`);
     if (mode === "runtime-cdn" && runtime.dependencyStates?.length === 0) issues.push("runtime dependency states were not exposed");
     if (mode === "runtime-cdn" && runtime.dependencyStates?.includes("pending")) issues.push("runtime dependency states are still pending");
 
     if (issues.length) {
-      return { status: "failed", reason: issues.join(" | "), runtime, viewports, mermaid, code, dataTables, interactions };
+      return { status: "failed", reason: issues.join(" | "), runtime, viewports, mermaid, code, dataTables, interactions, accessibility };
     }
 
     return {
@@ -707,7 +1039,8 @@ async function validateBrowserWithCdp(file, mode) {
       mermaid,
       code,
       dataTables,
-      interactions
+      interactions,
+      accessibility
     };
   } finally {
     client?.close();

@@ -1,26 +1,26 @@
 ---
 name: html-work-reports
-description: Load when a non-trivial task has a complete conclusion needing a concise Chinese-first self-contained HTML report, review, plan, status dashboard, research explainer, architecture walkthrough, or lightweight export editor; skip permission pauses, simple chat answers, production UI, slide decks, and bundled web apps.
+description: Load when completed implementation, OpenSpec, validation, or review work has a complete conclusion needing a concise Chinese-first self-contained HTML report, plan, status dashboard, research explainer, architecture walkthrough, or lightweight export editor; skip permission pauses, simple chat answers, production UI, slide decks, and bundled web apps.
 ---
 
 # HTML Work Reports
 
-## Overview
-
-Turn completed work into one portable Chinese `.html` only when HTML makes the handoff shorter, clearer, or easier to scan than chat.
+Turn completed work into one portable Chinese `.html` when HTML makes the handoff shorter, clearer, or easier to scan than chat.
 
 ## Decision Rule
 
 Use when a completed non-trivial task needs findings, tradeoffs, metrics, next actions, or a report/review/plan/status/explainer/dashboard/editor that would otherwise become a Markdown wall.
+
+Default to this skill after substantial completed implementation, OpenSpec apply/archive, release-prep, validation-heavy review, or multi-file repo work when the handoff includes changed files and verification results. The user does not need to say "HTML" for that completed-work handoff.
 
 ## Trigger Examples
 
 Use this skill for requests like:
 
 - "Turn the completed implementation summary into a visual HTML report with file evidence."
+- "Finish an OpenSpec apply change and generate an HTML acceptance report with tasks, changed files, fixture reports, and validation gates."
 - "Create an interactive PR review report with severity filters and highlighted snippets."
 - "Explain this module call path as a self-contained page with a rendered diagram."
-- "Build an incident timeline page with impact, logs, and follow-up status."
 - "Convert the research result into a skimmable HTML explainer with citations."
 - "Make a small prompt/config editor that exports JSON or Markdown."
 
@@ -35,19 +35,21 @@ Do not use this skill for:
 
 ## Output Contract
 
-Write one single static `.html` as UTF-8 Chinese under `reports/` unless the repo has a better convention. Link the file and verification.
+Write one single static `.html` under `reports/` as UTF-8 Chinese. Link the file and verification.
 
-Start with a one-sentence conclusion. Prefer tables for structured, segmented, point-by-point, status, or comparison data. Keep section summaries one line, table cells phrase-like, and bullets to one judgment or action. Mark key conclusions, risks, changes, and verification with `**...**` or `==...==`. Add other visual blocks or controls only when they reduce reading effort. Use inlineable HTML/CSS and vanilla JS; runtime-cdn may reference pinned Mermaid, Markdown, sanitizer, and code-highlighting libraries, but never React, Tailwind, Vite, or another build step.
+Start with BLUF: one-sentence conclusion plus reader intent. Add claims, evidence, charts, or controls only when they reduce reading effort. Keep summaries one line, cells phrase-like, bullets one judgment/action.
 
-For code-changing work, include code only when prose cannot carry the point. If used, include a source file link label with line number, copy only the decisive snippet, and highlight exact lines. Keep snippets short. Add a `diff` block only when before/after evidence matters.
+Use inlineable HTML/CSS and vanilla JS only; runtime-cdn may reference pinned Mermaid, Markdown, sanitizer, and code-highlighting libraries, but never React, Tailwind, Vite, a build step, or bundled app runtime.
 
-For complex sequence, architecture, call-path, or data-flow changes, render Mermaid in HTML only when the diagram is faster than text. Keep source fallback as hidden machine-verifiable data.
+For code-changing work, include code only when prose cannot carry the point. If used, include a source file link label with line number, decisive snippet, highlighted lines, and `diff` only when before/after matters.
+
+For complex sequence, architecture, call-path, or data-flow changes, render Mermaid only when the diagram is faster than text. Keep source fallback as hidden machine-verifiable data.
 
 ## Generator First Workflow
 
 Prefer the internal generator:
 
-1. Write a UTF-8 JSON input that follows `references/report-input-schema.json`; omit `renderMode` for the default `runtime-cdn` Codex-visible report, or use `pre-rendered` only when offline primary content is required.
+1. Write a UTF-8 JSON input following `references/report-input-schema.json`; include optional `intent`, `claims`, richer `evidence`, and bounded `chart` sections only when useful.
 2. Run `scripts/create-report.mjs --input <input.json> --out-dir reports --slug <name> --json`.
 3. Run `scripts/validate-html-report.mjs reports/<name>.html --json --require-browser` for runtime-cdn reports.
 4. Hand off the report link and the verification result.
@@ -62,28 +64,28 @@ Use `assets/components/report-ui.css` and `assets/components/report-ui.js` for c
 
 ## Visual And Rich Content Rules
 
-- Put conclusion first: decision, status, top risks, next action. Prefer one sentence before details.
-- Use grouped navigation that follows the report's argument, not the component inventory. Prefer groups like 摘要、变更、影响、风险、验证、下一步、细节.
-- Prefer `data-table` sections for structured, segmented, point-by-point, status, comparison, or checklist-like data. Keep cells phrase-like. Use bullets for short unordered notes, one judgment or action per bullet; use diagrams, code, evidence cards, tabs, and filters only when they serve a concrete reader need.
+- Use SCQA/PREP only to shape content, but the first visible sentence still gives the answer.
+- Keep support to Top 3, mark 事实 / 推断 / 假设, and end with CTA or next action when a decision remains.
+- Treat validator warning 是 advisory: fix it only when the change lowers decision cost; otherwise keep it and explain why.
+- Keep important claims traceable to evidence. Unsupported conclusions become assumptions, open questions, or low-confidence inferences.
+- Use `chart` only for bounded static bar, line, sparkline, bullet, slope, or matrix visuals with takeaway, source, alt text, and table fallback.
+- Prefer `data-table` sections for structured, segmented, point-by-point, status, comparison, or checklist-like data.
 - Render Markdown, Mermaid, and code through pinned runtime-cdn libraries by default; preserve machine-readable state, but do not show effect tags such as `Markdown rendered`, `code highlighted`, or `Source fallback`.
+- 当内容天然是流程、路由、调用链、命令、配置、代码或补丁证据时，优先用 Mermaid、Markdown、code 或 diff；不要压扁成泛化卡片/表格。
 - Code reports need source link, line number, copied snippet, highlighted line or diff, but reports do not need code by default.
-- Escape/sanitize mixed-trust content; code and paths stay inert.
-- Use jump links, filters, tabs, copy buttons, selected states, and dim/blur focus without layout-shifting hover transforms. The dedicated `data-table` component may scale only the hovered cell with `transform`; the rest of the row and column should highlight without reflow.
+- Escape/sanitize mixed-trust and untrusted content; code and paths stay inert.
+- Use grouped navigation that follows the report's argument, not the component inventory.
 
 ## Failure Lessons
 
-- 必须使用 UTF-8 中文输入和输出。连续问号乱码通常来自 PowerShell/stdin/codepage 把中文转成非 UTF-8；优先写 UTF-8 JSON 文件。
-- 不要外显 Source fallback、Code source 或 rich render status。它们只应作为隐藏 fallback 和校验状态存在，否则报告会显得像调试页面。
-- 浏览器、Mermaid 预渲染或验证器错误只能写入清洗后的诊断；不要把本地绝对路径、`file:///` URL、token 或原始 HTML/script 泄露到报告里。
-- 代码行必须紧凑。逐行 `<span>` 之间不要插入换行文本节点，CSS 行高保持接近正常代码阅读密度。
-- 不要为了展示能力硬加图标、代码、证据、Mermaid 或效果标签。组件必须服务于内容，否则它们会把目录和正文变成噪音。
-- 模板先给结论，再按本次汇报的实际问题分组；避免固定套用“图表/代码/证据/验证/行动”的组件目录。
-- 假定读者没耐心。能一句话讲清的内容不要拆成两句，能用三个短点讲清的内容不要堆成长段。
+- 必须使用 UTF-8 中文输入和输出；连续问号乱码通常来自 shell/codepage，把输入写成 UTF-8 JSON 文件。
+- 不要外显 Source fallback、Code source 或 rich render status；它们只做隐藏 fallback 和校验状态。
+- Mermaid、浏览器、validator 诊断必须脱敏：本地绝对路径、`file:///`、token、原始 HTML/script 都不能进报告。
+- 代码行保持紧凑，不要在逐行 `<span>` 之间插入换行文本节点。
+- 不要硬加图表、代码、证据、Mermaid 或效果标签；组件必须服务内容。
 
 ## Verification
 
-Before handing off:
-
-Run `scripts/validate-html-report.mjs`; for runtime-cdn reports, prefer `--require-browser` so Codex-visible rendering, overflow, overlap, Mermaid containment, code tokens, and controls are actually checked.
+Before handing off, run `scripts/validate-html-report.mjs`. For runtime-cdn reports, prefer `--require-browser` so rendering, overflow, Mermaid, code tokens, focus, and controls are checked.
 
 For patterns, schema, template selection, rich-content handling, and validation, read `references/html-report-patterns.md`.

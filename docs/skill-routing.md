@@ -34,7 +34,7 @@ Use [Skill quality guide](skill-quality-guide.md) for description, gotcha, progr
 | One-off local UI debugging | `webapp-testing` | Browser plugin/Playwright as available |
 | Durable E2E test suite | `e2e-testing` | `verification-loop` |
 | Deep pre-PR or CE-style code review | `compound-code-review` | `coding-standards` for a broad quality baseline; `security-review` for security-only review; `verification-loop` for command gates |
-| Non-trivial completed-task conclusion, self-contained HTML work report, plan, review, status update, research explainer, or lightweight editor | `html-work-reports` | `web-artifacts-builder` when a bundled React/Tailwind app is needed |
+| Completed implementation, OpenSpec, validation, or review handoff needing a self-contained HTML work report, plan, status update, research explainer, or lightweight editor | `html-work-reports` | `web-artifacts-builder` when a bundled React/Tailwind app is needed |
 | Skill Hub maintenance, installed skill refresh, or target-repo candidate skill discovery | `update-skill-hub` | `skill-evaluator` for one third-party repository; `agent-sort` for an ECC-only target-repo install plan |
 | General code quality | `coding-standards` | language/framework-specific skill when present |
 | Security review | `security-review` | `verification-loop` |
@@ -59,7 +59,7 @@ These boundaries are mirrored by `tests/fixtures/skill-routing-cases.json` so de
 - `agent-introspection-debugging` loads only for agent runs, tool loops, context drift, or harness failures.
 - `prototype` loads for explicitly throwaway experiments that answer one design question.
 - `frontend-design` loads for production-grade visual UI creation, not routine reports or debugging.
-- `html-work-reports` loads for non-trivial completed-task conclusions and self-contained work artifacts where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat.
+- `html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat.
 - `compound-code-review` loads for deep structured review; focused security and final command gates route elsewhere.
 - `security-review` loads for focused security-sensitive code, auth, secrets, injection, unsafe IO, or payments.
 - `verification-loop` loads for completion gates after work is done, not for root-cause diagnosis or review analysis.
@@ -78,9 +78,9 @@ The project-local `.codex/skills/skill-creator` copy was removed. Codex already 
 
 ## HTML Work Reports
 
-Use `html-work-reports` when a non-trivial task is complete and the handoff should be browsable, visual, interactive, or exportable. It is intentionally narrower than `web-artifacts-builder`: it covers one-file reports, reviews, plans, explainers, status dashboards, and lightweight editors, while `web-artifacts-builder` remains the choice for complex bundled React/Tailwind artifacts.
+Use `html-work-reports` when a non-trivial task is complete and the handoff should be browsable, visual, interactive, or exportable. Default to it after substantial implementation, OpenSpec apply/archive, release-prep, validation-heavy review, or multi-file repo work when the handoff includes changed files and verification results, even if the user did not literally ask for "HTML". It is intentionally narrower than `web-artifacts-builder`: it covers one-file reports, reviews, plans, explainers, status dashboards, and lightweight editors, while `web-artifacts-builder` remains the choice for complex bundled React/Tailwind artifacts.
 
-The strengthened version ships reusable assets under `.codex/skills/html-work-reports/assets/` plus internal generator and validator scripts under `.codex/skills/html-work-reports/scripts/`. Prefer JSON-driven generation through `create-report.mjs`; use custom HTML only for exceptions, and run `validate-html-report.mjs` before handoff.
+The strengthened version ships reusable assets under `.codex/skills/html-work-reports/assets/` plus internal generator and validator scripts under `.codex/skills/html-work-reports/scripts/`. Prefer JSON-driven generation through `create-report.mjs`; use optional intent, claims, evidence ids, and bounded charts when they help the reader decide. Use custom HTML only for exceptions, and run `validate-html-report.mjs` before handoff.
 
 This skill is inspired by [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) and local evaluation of `html-tools`-style single-file artifacts. Third-party HTML artifact skills were not installed because the repository needed a governance/reporting trigger, not another broad tool-building trigger.
 
