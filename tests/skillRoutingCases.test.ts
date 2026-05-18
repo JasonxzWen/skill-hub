@@ -15,7 +15,7 @@ const requiredHighOverlapSkills = [
   'agent-introspection-debugging',
   'prototype',
   'frontend-design',
-  'html-work-reports',
+  'effective-interact',
   'compound-code-review',
   'security-review',
   'verification-loop',

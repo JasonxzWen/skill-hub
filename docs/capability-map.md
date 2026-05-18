@@ -8,7 +8,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 
 | Profile | Purpose | Default use |
 |---|---|---|
-| `minimal` | Low-noise daily engineering profile with plan pressure testing, runtime diagnosis, throwaway prototyping, structured code review, HTML work reports, quality, TDD, verification, security, current docs, and self-debugging. | Default for new target repos. |
+| `minimal` | Low-noise daily engineering profile with plan pressure testing, runtime diagnosis, throwaway prototyping, structured code review, Effective Interact, quality, TDD, verification, security, current docs, and self-debugging. | Default for new target repos. |
 | `web` | Frontend design, UI prototyping, browser validation, HTML artifacts, slides, and UI audits. | Add when a repo regularly ships web UI. |
 | `openspec-formal` | Formal OpenSpec change proposal, apply, and archive lifecycle. | Explicit only; use when the user asks for OpenSpec or formal change artifacts. |
 | `ralph` | Ralph PRD and loop helpers. | Explicit only; use when the user wants Ralph-style repeated execution. |
@@ -25,7 +25,7 @@ This document is the human-readable index for `capabilities/index.json`. The JSO
 - Use `diagnose` for runtime bugs, failing commands, flaky behavior, and performance regressions; use `agent-introspection-debugging` only for agent/tool harness failures.
 - Use `prototype` for explicitly throwaway logic or UI experiments that answer one design question; return to `tdd-workflow` for production implementation.
 - Use `compound-code-review` for deep pre-PR or Compound Engineering-style code review with structured findings and routing.
-- Use `html-work-reports` for non-trivial completed-task conclusions, plans, reviews, research, status reports, and explainers where a generated, validated, self-contained visual HTML artifact is more useful than Markdown.
+- Use `effective-interact` for non-trivial user-interaction artifacts, option comparisons, plans, reviews, research, status updates, architecture walkthroughs, explorable explainers, and lightweight export editors where a generated, validated, self-contained visual HTML artifact lowers decision cost more than Markdown.
 - Use `feynman-learning-coach` only for explicit learning or tutoring sessions, not for ordinary implementation or quick factual lookup.
 - Use the `harness` profile when the task is to scaffold a target repo's agent operating environment, not when the user only needs a read-only readiness report.
 - Use `web-artifacts-builder` only when the HTML artifact needs a bundled React/Tailwind/shadcn app.

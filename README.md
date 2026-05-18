@@ -2,7 +2,7 @@
 
 Skill Hub is a curated workspace for collecting and adapting famous agent skills into Codex-friendly versions.
 
-The current target is a small, high-signal set rather than "install everything": plan pressure-testing, runtime diagnosis, throwaway prototyping, structured code review, HTML work reports, optional Feynman-style learning coaching, harness environment templates, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
+The current target is a small, high-signal set rather than "install everything": plan pressure-testing, runtime diagnosis, throwaway prototyping, structured code review, Effective Interact, optional Feynman-style learning coaching, harness environment templates, OpenSpec workflows, Everything Claude Code, selected Anthropic built-in skills, selected Vercel web skills, and a Codex-adapted Ralph loop.
 
 The CLI is written in TypeScript and built with Bun for development speed. Published npm packages keep a Node-compatible `bin/skill-hub.mjs` entrypoint that loads the generated `dist/skillHub.js`, so target users can still run `npx @jasonwen/skill-hub ...` without installing Bun.
 
@@ -19,7 +19,7 @@ The CLI is written in TypeScript and built with Bun for development speed. Publi
 - Selected Vercel web skills are installed under `.codex/skills/`.
 - Ralph is downloaded locally under `vendor/snarktank-ralph/`.
 - Ralph PRD and loop skills are installed under `.codex/skills/`, with a Codex-native runner under `scripts/ralph/`.
-- `html-work-reports` is installed under `.codex/skills/` to generate and validate self-contained visual HTML handoffs for non-trivial completed-task conclusions and work artifacts.
+- `effective-interact` is installed under `.codex/skills/` to generate and validate self-contained visual HTML interaction artifacts for non-trivial alignment points, handoffs, option comparisons, evidence reviews, architecture walkthroughs, explainers, status dashboards, and lightweight export editors.
 - `update-skill-hub` is installed under `.codex/skills/` to audit installed skill updates and evaluate new candidate skills against target-repo evidence.
 - Matt Pocock's `skills` repository is downloaded locally under `vendor/mattpocock-skills/`.
 - Matt Pocock `grill-me`, `diagnose`, and `prototype` are installed under `.codex/skills/` for pressure testing, runtime debugging, and throwaway design prototypes.
@@ -65,7 +65,7 @@ README.md             Project overview
 | [Compound Engineering Plugin](https://github.com/EveryInc/compound-engineering-plugin) | `compound-code-review` adapted from `ce-code-review` only | MIT, vendored source ignored |
 | [Learn FASTER](https://github.com/hluaguo/learn-faster-kit) | Source inspiration for `feynman-learning-coach`; no CLI/runtime copied | MIT, referenced at evaluated commit |
 | [Learn Harness Engineering](https://github.com/walkinglabs/learn-harness-engineering) | Source inspiration for the `harness` environment profile and templates | MIT, adapted from the course and Chinese template library |
-| [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) | Source inspiration for `html-work-reports` | Referenced, not copied |
+| [The unreasonable effectiveness of HTML](https://thariqs.github.io/html-effectiveness/) | Source reference for `effective-interact` option galleries, flow maps, explainers, status artifacts, and export editors | Referenced, not copied |
 
 Superpowers is tracked as an optional upstream source but is not installed by default because its core workflow overlaps heavily with ECC and the adapted built-in skills.
 The Karpathy-inspired skill is not installed as a separate trigger because its core guidance is already project-level instruction in `AGENTS.md`.
@@ -162,7 +162,7 @@ skill-hub --help
 
 Publishing uses GitHub Actions trusted publishing after the package exists and npm is configured. See [npm publishing](docs/npm-publishing.md) for the maintainer checklist.
 
-Git and npm inclusion rules are centralized in `config/artifact-policy.json`. `dist/` is generated for npm and ignored by Git, installable skills such as `.codex/skills/html-work-reports/` are both committed and published, and active `openspec/changes/<name>/` work stays Git-only until archived.
+Git and npm inclusion rules are centralized in `config/artifact-policy.json`. `dist/` is generated for npm and ignored by Git, installable skills such as `.codex/skills/effective-interact/` are both committed and published, and active `openspec/changes/<name>/` work stays Git-only until archived.
 
 In the current sandbox, `openspec` may warn as not visible even though it is installed on the host. Use `-SkipExternal` to validate only repository files:
 

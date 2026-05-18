@@ -8,7 +8,7 @@ test('skill quality inventory reports routing metadata without enforcing it', ()
   expect(inventory.roots).toEqual(['.codex/skills']);
   expect(inventory.skills.length).toBeGreaterThan(0);
 
-  const htmlReport = inventory.skills.find((skill) => skill.name === 'html-work-reports');
+  const htmlReport = inventory.skills.find((skill) => skill.name === 'effective-interact');
   expect(htmlReport).toBeDefined();
   expect(htmlReport?.descriptionWordCount).toBeGreaterThan(0);
   expect(typeof htmlReport?.descriptionStartsWithLoadWhen).toBe('boolean');

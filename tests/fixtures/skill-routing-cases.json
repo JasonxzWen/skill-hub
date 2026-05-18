@@ -86,7 +86,7 @@
       "skill": "frontend-design",
       "kind": "negative",
       "prompt": "Turn this review into a self-contained HTML report with filters and severity sections.",
-      "expectedSkill": "html-work-reports",
+      "expectedSkill": "effective-interact",
       "docsBoundary": "`frontend-design` loads for production-grade visual UI creation, not routine reports or debugging."
     },
     {
@@ -98,52 +98,76 @@
       "docsBoundary": "`frontend-design` loads for production-grade visual UI creation, not routine reports or debugging."
     },
     {
-      "id": "html-work-reports-positive-review-artifact",
-      "skill": "html-work-reports",
+      "id": "effective-interact-positive-review-artifact",
+      "skill": "effective-interact",
       "kind": "positive",
-      "prompt": "Create a one-file HTML work report for this PR review with collapsible findings and copyable action items.",
-      "expectedSkill": "html-work-reports",
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "prompt": "Create a one-file effective interaction for this PR review with collapsible findings and copyable action items.",
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
-      "id": "html-work-reports-positive-completed-conclusion",
-      "skill": "html-work-reports",
+      "id": "effective-interact-positive-completed-conclusion",
+      "skill": "effective-interact",
       "kind": "positive",
       "prompt": "The implementation is complete; create a visual handoff with the conclusion, changed files, highlighted code, verification, and next actions.",
-      "expectedSkill": "html-work-reports",
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
-      "id": "html-work-reports-positive-openspec-acceptance",
-      "skill": "html-work-reports",
+      "id": "effective-interact-positive-openspec-acceptance",
+      "skill": "effective-interact",
       "kind": "positive",
       "prompt": "The OpenSpec apply change is done; produce an HTML acceptance report with tasks, changed files, generated fixtures, and validation gates.",
-      "expectedSkill": "html-work-reports",
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
-      "id": "html-work-reports-negative-product-page",
-      "skill": "html-work-reports",
+      "id": "effective-interact-positive-option-gallery",
+      "skill": "effective-interact",
+      "kind": "positive",
+      "prompt": "Create a self-contained HTML option gallery comparing these three implementation approaches before I choose one.",
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
+    },
+    {
+      "id": "effective-interact-positive-intermediate-status",
+      "skill": "effective-interact",
+      "kind": "positive",
+      "prompt": "During this refactor, create a self-contained HTML status board with current options, blockers, file evidence, and copyable next-step choices so we can align before continuing.",
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
+    },
+    {
+      "id": "effective-interact-positive-export-editor",
+      "skill": "effective-interact",
+      "kind": "positive",
+      "prompt": "Build a one-file temporary HTML editor so I can toggle these config options and copy the resulting JSON diff back here.",
+      "expectedSkill": "effective-interact",
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
+    },
+    {
+      "id": "effective-interact-negative-product-page",
+      "skill": "effective-interact",
       "kind": "negative",
       "prompt": "Build a branded product landing page as the first screen of the app.",
       "expectedSkill": "frontend-design",
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
-      "id": "html-work-reports-forbidden-short-answer",
-      "skill": "html-work-reports",
+      "id": "effective-interact-forbidden-short-answer",
+      "skill": "effective-interact",
       "kind": "forbidden-load",
       "prompt": "Summarize the command output in two sentences.",
       "expectedSkill": null,
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
-      "id": "html-work-reports-forbidden-permission-pause",
-      "skill": "html-work-reports",
+      "id": "effective-interact-forbidden-permission-pause",
+      "skill": "effective-interact",
       "kind": "forbidden-load",
       "prompt": "Before pushing this branch, stop and ask me for approval.",
       "expectedSkill": null,
-      "docsBoundary": "`html-work-reports` loads for substantial completed implementation, OpenSpec, validation, and review handoffs where HTML navigation, rendered diagrams, code evidence, or export controls beat Markdown; permission pauses and simple chat remain direct chat."
+      "docsBoundary": "`effective-interact` loads for non-trivial user-interaction artifacts where HTML navigation, option comparison, rendered diagrams, code evidence, explorable controls, or visible export controls beat Markdown; permission pauses, simple chat, production UI, bundled apps, and decks route elsewhere."
     },
     {
       "id": "compound-code-review-positive-deep-review",

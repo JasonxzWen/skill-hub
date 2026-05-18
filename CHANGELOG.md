@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 - 2026-05-18
+
+- Rename `html-work-reports` to `effective-interact` and broaden it into a visual HTML interaction skill for alignment, option comparison, reviews, architecture walkthroughs, explainers, status artifacts, and lightweight export editors.
+- Add an HTML usefulness gate and default generated intermediate artifacts to the ignored skill-local `artifacts/` directory while keeping durable examples under `reports/`.
+
 ## 0.1.4 - 2026-05-15
 
 - Move project-local skills from `.agents/skills` to Codex-native `.codex/skills`.
