@@ -9,12 +9,12 @@
   },
   "profiles": {
     "minimal": {
-      "description": "Low-noise daily engineering profile with plan pressure testing, runtime diagnosis, throwaway prototyping, structured code review, HTML reports, quality, TDD, verification, security, docs lookup, and self-debugging.",
+      "description": "Low-noise daily engineering profile with plan pressure testing, runtime diagnosis, throwaway prototyping, structured code review, HTML interaction artifacts, quality, TDD, verification, security, docs lookup, and self-debugging.",
       "components": [
         "skill:grill-me",
         "skill:diagnose",
         "skill:prototype",
-        "skill:html-work-reports",
+        "skill:effective-interact",
         "skill:compound-code-review",
         "skill:coding-standards",
         "skill:tdd-workflow",
@@ -28,7 +28,7 @@
       "description": "Frontend, UI prototyping, and browser-validation profile for web UI work.",
       "components": [
         "skill:prototype",
-        "skill:html-work-reports",
+        "skill:effective-interact",
         "skill:frontend-design",
         "skill:web-artifacts-builder",
         "skill:frontend-slides",
@@ -411,37 +411,41 @@
       "risk": "low",
       "recommendation": "Use only for clearly marked throwaway prototypes that answer one design question; use frontend-design for production UI, web-artifacts-builder for standalone artifacts, and tdd-workflow for production implementation."
     },
-    "skill:html-work-reports": {
+    "skill:effective-interact": {
       "kind": "skill",
-      "path": ".codex/skills/html-work-reports",
+      "path": ".codex/skills/effective-interact",
       "version": "0.1.0",
       "source": "local",
       "provides": [
         "completed-task-html-handoffs",
-        "self-contained-html-reports",
+        "intermediate-html-interaction-artifacts",
+        "self-contained-html-interaction-artifacts",
         "interactive-work-artifacts",
-        "html-change-reports",
-        "visual-code-evidence-reports",
-        "generated-report-artifacts",
-        "validated-report-artifacts"
+        "html-change-artifacts",
+        "visual-code-evidence-artifacts",
+        "generated-interaction-artifacts",
+        "validated-interaction-artifacts",
+        "option-comparison-html-artifacts",
+        "explorable-html-explainers",
+        "disposable-export-editors"
       ],
       "overlapsWith": [
         "skill:web-artifacts-builder",
         "skill:frontend-slides",
         "skill:frontend-design"
       ],
-      "routing": "Load for non-trivial completed-task conclusions and generated, validated self-contained HTML reports, reviews, plans, status dashboards, research explainers, architecture walkthroughs, and lightweight export editors; skip permission pauses, simple chat answers, UI apps, decks, and bundled artifacts.",
+      "routing": "Load for non-trivial user-interaction artifacts that need generated, validated self-contained HTML surfaces for alignment, option galleries, reviews, plans, status dashboards, research explainers, architecture walkthroughs, explorable explanations, handoffs, or lightweight export editors instead of Markdown; skip permission pauses, simple chat, UI apps, decks, and bundled artifacts.",
       "detects": [
         {
-          "path": ".codex/skills/html-work-reports/SKILL.md",
+          "path": ".codex/skills/effective-interact/SKILL.md",
           "agent": "codex"
         },
         {
-          "path": ".opencode/skills/html-work-reports/SKILL.md",
+          "path": ".opencode/skills/effective-interact/SKILL.md",
           "agent": "opencode"
         },
         {
-          "path": ".claude/skills/html-work-reports/SKILL.md",
+          "path": ".claude/skills/effective-interact/SKILL.md",
           "agent": "claude-code"
         }
       ],
@@ -451,7 +455,7 @@
         "claude-code"
       ],
       "risk": "low",
-      "recommendation": "Create visual self-contained HTML handoffs for non-trivial completed-task conclusions, reviews, plans, status dashboards, research explainers, architecture walkthroughs, or lightweight export editors."
+      "recommendation": "Create visual self-contained HTML interaction artifacts for non-trivial alignment points, handoffs, option comparisons, reviews, plans, status dashboards, research explainers, architecture walkthroughs, or lightweight export editors."
     },
     "skill:compound-code-review": {
       "kind": "skill",
@@ -742,10 +746,10 @@
         "visual-frontend-creation"
       ],
       "overlapsWith": [
-        "skill:html-work-reports",
+        "skill:effective-interact",
         "skill:web-artifacts-builder"
       ],
-      "routing": "Use for polished product UI or web pages, not routine work reports.",
+      "routing": "Use for polished product UI or web pages, not routine interaction artifacts.",
       "detects": [
         {
           "path": ".codex/skills/frontend-design/SKILL.md",
@@ -766,7 +770,7 @@
         "claude-code"
       ],
       "risk": "low",
-      "recommendation": "Use for polished product UI or web pages, not routine work reports."
+      "recommendation": "Use for polished product UI or web pages, not routine interaction artifacts."
     },
     "skill:web-artifacts-builder": {
       "kind": "skill",
@@ -778,7 +782,7 @@
         "react-bundled-artifacts"
       ],
       "overlapsWith": [
-        "skill:html-work-reports",
+        "skill:effective-interact",
         "skill:frontend-design"
       ],
       "routing": "Use for complex React/Tailwind/shadcn artifacts.",
@@ -813,7 +817,7 @@
         "html-presentations"
       ],
       "overlapsWith": [
-        "skill:html-work-reports"
+        "skill:effective-interact"
       ],
       "routing": "Use for slide decks and PPT/PPTX-to-web work.",
       "detects": [

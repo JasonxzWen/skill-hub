@@ -32,7 +32,7 @@ test('plans default install into Codex skill directory', () => {
   const plan = planInstall({ targetDir, profile: 'minimal', agents: ['codex'] });
 
   expect(plan.profileName).toBe('minimal');
-  expect(plan.items.some((item) => item.componentId === 'skill:html-work-reports')).toBe(true);
+  expect(plan.items.some((item) => item.componentId === 'skill:effective-interact')).toBe(true);
   expect(plan.items.some((item) => item.componentId === 'skill:grill-me')).toBe(true);
   expect(plan.items.some((item) => item.componentId === 'skill:diagnose')).toBe(true);
   expect(plan.items.some((item) => item.componentId === 'skill:prototype')).toBe(true);
@@ -115,7 +115,7 @@ test('installs skills, writes lock, and reports current status', () => {
   const result = applyInstall(plan);
 
   expect(result.installed.length).toBeGreaterThan(0);
-  expect(fs.existsSync(path.join(targetDir, '.codex', 'skills', 'html-work-reports', 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(path.join(targetDir, '.codex', 'skills', 'effective-interact', 'SKILL.md'))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, '.codex', 'skills', 'grill-me', 'SKILL.md'))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, '.codex', 'skills', 'diagnose', 'SKILL.md'))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, '.codex', 'skills', 'prototype', 'SKILL.md'))).toBe(true);

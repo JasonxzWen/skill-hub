@@ -28,8 +28,8 @@ Observed after the Phase 2/3 seed on 2026-05-12:
 - All scanned skill names match their directory names.
 - All scanned skills have descriptions.
 - 10 descriptions are over the 50-word target.
-- 2 scanned descriptions start with `Load when`: `html-work-reports` and `feynman-learning-coach`.
-- Some local/adapted skills already use progressive spokes, including `compound-code-review`, `feynman-learning-coach`, `html-work-reports`, and `prototype`.
+- 2 scanned descriptions start with `Load when`: `effective-interact` and `feynman-learning-coach`.
+- Some local/adapted skills already use progressive spokes, including `compound-code-review`, `feynman-learning-coach`, `effective-interact`, and `prototype`.
 - `scripts/skill-quality-inventory.ts` emits a report-only JSON inventory for description length, `Load when` triggers, name/directory matching, body size, spokes, and imported/adapted metadata warnings.
 - `tests/fixtures/skill-routing-cases.json` seeds positive, negative, and forbidden-load cases for the high-overlap skills listed in Phase 3, plus the first local description-refactor demo.
 
@@ -81,7 +81,7 @@ Deliverables:
   - negative adjacent examples
   - forbidden-load examples
 - Add tests that verify every default-profile skill has at least one case in each bucket.
-- Add focused cases for high-overlap skills first: `diagnose`, `agent-introspection-debugging`, `prototype`, `frontend-design`, `html-work-reports`, `compound-code-review`, `security-review`, and `verification-loop`.
+- Add focused cases for high-overlap skills first: `diagnose`, `agent-introspection-debugging`, `prototype`, `frontend-design`, `effective-interact`, `compound-code-review`, `security-review`, and `verification-loop`.
 
 Verification:
 
@@ -104,7 +104,7 @@ Deliverables:
 
 Order:
 
-1. Local original skills: `html-work-reports`, `feynman-learning-coach` (seed conversion complete).
+1. Local original skills: `effective-interact`, `feynman-learning-coach` (seed conversion complete).
 2. Narrow adaptations: `compound-code-review`, `diagnose`, `prototype`, `grill-me`.
 3. Default-profile ECC skills with high overlap.
 4. Non-default profile skills.
