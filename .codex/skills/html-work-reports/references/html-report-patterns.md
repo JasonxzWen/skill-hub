@@ -92,7 +92,103 @@ Add richer sections only when they shorten the explanation:
 }
 ```
 
-Supported section types: `summary-cards`, `data-table`, `markdown`, `mermaid`, `code`, `diff`, `timeline`, `evidence`, `decision-matrix`, `actions`, `tabs`, and `filterable-cards`. Optional section fields `group`, `priority`, `summary`, `status`, and `richId` drive grouped navigation and runtime state. Optional root fields `evidence`, `verification`, and `nextActions` are rendered only when non-empty.
+Supported section types: `summary-cards`, `data-table`, `markdown`, `mermaid`, `code`, `diff`, `timeline`, `evidence`, `decision-matrix`, `actions`, `tabs`, `filterable-cards`, and `chart`. Optional section fields `group`, `priority`, `summary`, `status`, `richId`, and `trustLevel` drive grouped navigation, runtime state, and sanitization. Optional root fields `intent`, `claims`, `evidence`, `verification`, and `nextActions` are rendered only when useful or non-empty.
+
+## Decision Quality Contract
+
+Intent is optional but preferred. Use it before choosing components:
+
+```json
+{
+  "intent": {
+    "audience": "maintainer",
+    "primaryQuestion": "Can we accept this change?",
+    "decision": "Review and archive when validation stays green.",
+    "timeBudget": "3m",
+    "artifactKind": "decision",
+    "successCriteria": ["Conclusion is first", "Important claims link to evidence"]
+  }
+}
+```
+
+When intent is omitted, the generator infers conservative defaults from the template, sections, evidence, verification, and render mode. The first reading area must still answer the primary question before evidence, runtime dependency details, or component plumbing.
+
+Claims make conclusions auditable:
+
+```json
+{
+  "claims": [
+    {
+      "id": "claim-ready",
+      "statement": "The fixture path validates the report contract.",
+      "kind": "conclusion",
+      "evidenceIds": ["evidence-fixture"],
+      "confidence": "high",
+      "dateRange": "2026-05-18",
+      "knownLimits": ["Browser checks depend on local Chrome availability."]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-fixture",
+      "kind": "file",
+      "label": "Fixture report",
+      "value": ".codex/skills/html-work-reports/assets/fixtures/chart-accessibility-stress-report.json",
+      "status": "info",
+      "filePath": ".codex/skills/html-work-reports/assets/fixtures/chart-accessibility-stress-report.json",
+      "line": 1,
+      "trustLevel": "mixed-trust"
+    }
+  ]
+}
+```
+
+Important claim kinds are `conclusion`, `metric`, `trend`, `risk`, and `recommendation`. They need `evidenceIds` unless intentionally marked as an `assumption` or low-confidence inference.
+
+Use `chart` only for small explanatory visuals. Supported chart types are `bar`, `line`, `sparkline`, `bullet`, `slope`, and `matrix`. Every chart needs title, takeaway, data, encoding, source, alt text, and table fallback:
+
+```json
+{
+  "type": "chart",
+  "title": "Validation coverage",
+  "chart": {
+    "type": "bar",
+    "title": "Validation coverage",
+    "takeaway": "Each contract area has deterministic checks.",
+    "data": [{ "area": "Intent", "checks": 4 }],
+    "encoding": { "label": "area", "value": "checks" },
+    "source": { "label": "Fixture matrix", "accessedAt": "2026-05-18" },
+    "altText": "Bar chart showing validation checks by contract area.",
+    "tableFallback": {
+      "columns": ["area", "checks"],
+      "rows": [{ "area": "Intent", "checks": 4 }]
+    }
+  }
+}
+```
+
+Unsupported or malformed charts degrade to a table fallback instead of emitting arbitrary SVG, script, or canvas content.
+
+## Decision Briefing Contract
+
+HTML reports exist to lower the reader's decision cost. Use the Pyramid principle for structure, BLUF for the first sentence, and SCQA only as the hidden reasoning path when background is needed.
+
+- First sentence: answer the primary question in one direct sentence, ideally under 90 characters.
+- Support: keep the top layer to Top 3 mutually distinct points; push detail into evidence, code, diagrams, or appendix-style sections.
+- Boundary: label important statements as fact / inference / assumption through claim kind, confidence, and evidence links.
+- Density: prefer data, contrast, status counts, or source anchors over adjectives.
+- Ending: include a CTA or next action when the reader must approve, review, unblock, or continue work.
+
+The validator exposes `decision-brief-scan` as a non-blocking quality check. Treat its warnings as prompts to rewrite the report before handoff.
+
+## Warning Policy
+
+Validator warnings are advisory prompts, not a checklist to clear. In short: warning != required fix.
+
+- Fix the warning when the change lowers decision cost, shortens reading, or makes evidence easier to trust.
+- Keep the warning when the richer rendering, extra claim, or extra CTA would add noise.
+- If a warning is kept, mention the reason in the handoff instead of hiding it or adding decorative content.
+- Never add Mermaid, code, diff, charts, claims, or controls just to silence a warning.
 
 ## Writing Density Contract
 
@@ -138,6 +234,17 @@ Generator and validator scripts are internal `html-work-reports` assets. Do not 
 - **File references**: render as clickable local-path anchors when the host supports them, or as copyable path chips otherwise; do not create a separate evidence section when one sentence is enough.
 - **Citations**: keep source cards short and optional: title, source, date/accessed, and why it matters.
 
+## Rich Content Opportunity
+
+The default is not "always add diagrams and snippets"; it is "do not flatten naturally rich evidence into generic cards." Choose rich rendering when it reduces reasoning effort:
+
+- Use Mermaid for trigger routing, workflow, call path, dependency, state-machine, architecture, or data-flow explanations.
+- Use `code` when a file-and-line anchor is central to the claim, especially for skill descriptions, config, schema, or decisive implementation snippets.
+- Use `diff` when the report is about before/after behavior, a review finding, or a patch boundary.
+- Use Markdown for short prose, bullets, command lists, compact tables, and callouts that need semantic structure but not a bespoke component.
+
+The validator emits non-blocking rich-content opportunity warnings when it sees flow/routing language without Mermaid or central file-line evidence without a code/diff section. Treat those warnings as a prompt to revise the fixture unless the richer section would be noise.
+
 ## Runtime Rendering Support
 
 Use `runtime-cdn` as the default Codex-visible report path. It keeps the artifact as one static HTML file, but lets the browser use pinned libraries for rich rendering. Use `pre-rendered` only when primary rich content must not depend on CDN scripts. Use `fallback-only` only for constrained environments where readable source is acceptable.
@@ -174,6 +281,7 @@ Runtime rules:
 - highlight.js should use explicit language classes such as `language-typescript`; line-number wrappers and highlighted lines are applied by local report JS around highlighted token markup. Do not insert text newlines between block line wrappers; that creates fake blank rows in `<pre>`.
 - Every runtime-rendered block still needs hidden source fallback data for audit and degraded states, but do not show `Source fallback`, `Code source`, `Markdown rendered`, or `Code highlighted` labels during normal successful rendering.
 - CDN runtime use is a conscious tradeoff: better Codex-visible rendering, but weaker offline guarantees than pre-rendered output.
+- Runtime dependencies must stay pinned and auditable. Include integrity metadata when available; otherwise declare an explicit `data-runtime-dependency-integrity-exemption` in the manifest and generated tags.
 - Browser, Mermaid pre-render, and validator diagnostics must be sanitized before entering HTML or JSON output. Replace local absolute paths, `file:///` URLs, home-directory paths, and GitHub-style tokens with placeholders, strip raw HTML/script, and keep only the short actionable error.
 
 ## Grouped Navigation Contract
@@ -212,11 +320,16 @@ Run `scripts/validate-html-report.mjs` on generated or custom HTML before handof
 - UTF-8/mojibake guardrails, including continuous half-width question marks
 - render mode, grouped navigation, section group metadata, source fallback, and runtime state
 - runtime dependency manifest and pinned versions for runtime-cdn reports
+- intent metadata for audience, primary question, decision density, and time budget
+- claim/evidence relationships, including claim id in failure output
+- chart accessibility fields: takeaway, alt text, source metadata, and table fallback
+- runtime dependency integrity metadata or documented exemptions
+- trust-model boundaries and unsafe sinks for mixed-trust or untrusted content
 - Markdown table/list rendering or explicit runtime fallback
 - Mermaid inline SVG, runtime target, or explicit degraded state
 - code highlight markup, language classes, line wrappers, and inert file path labels
 - evidence, verification status, filter, tab, and copy controls only when the report contains those optional modules
-- browser checks across narrow, medium, and desktop viewports for body overflow, major overlap, Mermaid containment, code tokens, and control state changes
+- browser checks across narrow, medium, and desktop viewports for body overflow, major overlap, Mermaid containment, code tokens, chart containment, visible focus, reduced-motion CSS, primary conclusion visibility, and control state changes
 
 If Playwright/Chrome is unavailable, browser-only coverage must be reported as `degraded`; with `--require-browser`, validation must fail instead of silently claiming browser checks passed.
 

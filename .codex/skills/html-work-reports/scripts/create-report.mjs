@@ -20,7 +20,8 @@ const runtimeLibraries = [
     url: "https://cdn.jsdelivr.net/npm/dompurify@3.4.2/dist/purify.min.js",
     purpose: "插入 Markdown 渲染结果前进行净化",
     required: true,
-    kind: "script"
+    kind: "script",
+    integrityExemption: "Pinned jsdelivr URL; SRI hash is not maintained for this generated artifact path."
   },
   {
     id: "highlightjs",
@@ -30,7 +31,9 @@ const runtimeLibraries = [
     cssUrl: "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css",
     purpose: "为代码块生成语法 token 高亮",
     required: true,
-    kind: "script"
+    kind: "script",
+    integrityExemption: "Pinned jsdelivr URL; SRI hash is not maintained for this generated artifact path.",
+    cssIntegrityExemption: "Pinned jsdelivr CSS URL; SRI hash is not maintained for this generated artifact path."
   },
   {
     id: "marked",
@@ -39,7 +42,8 @@ const runtimeLibraries = [
     url: "https://cdn.jsdelivr.net/npm/marked@18.0.3/lib/marked.esm.js",
     purpose: "解析 runtime-cdn 报告中的 Markdown 源文本",
     required: true,
-    kind: "module"
+    kind: "module",
+    integrityExemption: "Pinned ESM URL loaded by module import; SRI is not available for inline import statements."
   },
   {
     id: "mermaid",
@@ -48,9 +52,12 @@ const runtimeLibraries = [
     url: "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs",
     purpose: "从 Mermaid 源文本渲染图表",
     required: true,
-    kind: "module"
+    kind: "module",
+    integrityExemption: "Pinned ESM URL loaded by module import; SRI is not available for inline import statements."
   }
 ];
+
+const supportedChartTypes = ["bar", "line", "sparkline", "bullet", "slope", "matrix"];
 
 const templateMeta = {
   "implementation-handoff": {
@@ -76,6 +83,7 @@ const templateMeta = {
 };
 
 const groupLabels = {
+  claims: "判断",
   summary: "摘要",
   main: "正文",
   changes: "变更",
@@ -115,6 +123,22 @@ const kindLabels = {
   source: "来源",
   assumption: "假设",
   verification: "验证"
+};
+
+const claimKindLabels = {
+  conclusion: "结论",
+  risk: "风险",
+  metric: "指标",
+  trend: "趋势",
+  recommendation: "建议",
+  assumption: "假设"
+};
+
+const confidenceLabels = {
+  high: "高",
+  medium: "中",
+  low: "低",
+  unknown: "未知"
 };
 
 function parseArgs(argv) {
@@ -249,6 +273,36 @@ function normalizeSection(section, index) {
   };
 }
 
+function normalizeTrustLevel(value) {
+  return ["trusted-generated", "mixed-trust", "untrusted"].includes(value) ? value : "mixed-trust";
+}
+
+function inferReportIntent(input, template, mode) {
+  const explicit = input.intent && typeof input.intent === "object" ? input.intent : {};
+  const hasEvidence = (input.evidence || []).length > 0;
+  const hasClaims = (input.claims || []).length > 0;
+  const hasCharts = (input.sections || []).some((section) => section.type === "chart");
+  const artifactKind = explicit.artifactKind
+    || (template === "decision-matrix" ? "decision" : "")
+    || (template === "research-explainer" ? "research" : "")
+    || (template === "review-findings" ? "review" : "")
+    || "handoff";
+
+  return {
+    audience: explicit.audience || "maintainer",
+    primaryQuestion: explicit.primaryQuestion || input.summary || "What should the reader know first?",
+    decision: explicit.decision || (hasClaims || hasEvidence ? "Review the conclusion against linked evidence." : "Scan the conclusion and next actions."),
+    timeBudget: explicit.timeBudget || (hasCharts ? "3m" : "30s"),
+    artifactKind,
+    successCriteria: Array.isArray(explicit.successCriteria) && explicit.successCriteria.length > 0
+      ? explicit.successCriteria
+      : [
+        mode === "runtime-cdn" ? "Primary conclusion is readable before runtime enhancement." : "Primary conclusion is readable without network runtime.",
+        hasClaims ? "Important claims are tied to evidence or marked as assumptions." : "The report stays concise when evidence is not needed."
+      ]
+  };
+}
+
 function sectionId(title, index = 0) {
   return `section-${slugify(title)}-${index + 1}`;
 }
@@ -293,18 +347,29 @@ function renderSourceLink(section, fallbackId) {
   return `<span class="source-link" data-source-link data-file-path="${escapeAttr(section.filePath || "")}" data-source-ref="${escapeAttr(fallbackId || "")}">${escapeHtml(label)}</span>`;
 }
 
+function visibleGroupLabel(section) {
+  const label = groupLabels[section.group] || section.group || "";
+  const title = String(section.title || "");
+  if (!label || title.includes(label)) return "";
+  return `<p class="meta">${escapeHtml(label)}</p>`;
+}
+
 function renderSectionHeader(section, statusText = "") {
   const summary = section.summary ? `<p class="section-summary">${escapeHtml(section.summary)}</p>` : "";
   const status = statusText || section.status || "info";
   const pill = showSectionStatus(status) ? `<span class="status-pill ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span>` : "";
   return `<div class="section-heading split-row">
     <div>
-      <p class="meta">${escapeHtml(groupLabels[section.group] || section.group)}</p>
+      ${visibleGroupLabel(section)}
       <h2>${escapeHtml(section.title)}</h2>
       ${summary}
     </div>
     ${pill}
   </div>`;
+}
+
+function renderSupplementalHeading({ group, title, summary, status = "info" }) {
+  return renderSectionHeader({ group, title, summary, status }, status);
 }
 
 function renderInlineEmphasis(escaped) {
@@ -507,6 +572,168 @@ function renderDataTableSection(section) {
   </section>`;
 }
 
+function chartSpecFromSection(section) {
+  return section.chart && typeof section.chart === "object" ? section.chart : section;
+}
+
+function chartDataRows(chart) {
+  if (Array.isArray(chart.tableFallback?.rows)) return chart.tableFallback.rows;
+  if (Array.isArray(chart.data)) return chart.data;
+  return [];
+}
+
+function chartColumns(chart, rows) {
+  if (Array.isArray(chart.tableFallback?.columns) && chart.tableFallback.columns.length > 0) {
+    return chart.tableFallback.columns.map(normalizeTableColumn);
+  }
+  const encoding = chart.encoding && typeof chart.encoding === "object" ? chart.encoding : {};
+  const keys = [encoding.label, encoding.x, encoding.category, encoding.value, encoding.y, encoding.status]
+    .filter(Boolean);
+  if (keys.length > 0) {
+    return [...new Set(keys)].map((key, index) => normalizeTableColumn({ key, label: key }, index));
+  }
+  const objectRow = rows.find((row) => row && typeof row === "object" && !Array.isArray(row));
+  return objectRow ? Object.keys(objectRow).map((key, index) => normalizeTableColumn({ key, label: key }, index)) : [];
+}
+
+function chartValue(row, key, fallback = "") {
+  if (!key) return fallback;
+  if (Array.isArray(row)) return row[Number(key)] ?? fallback;
+  if (row && typeof row === "object" && hasOwnValue(row, key)) return row[key];
+  return fallback;
+}
+
+function numericChartValue(row, key) {
+  const value = Number(chartValue(row, key, 0));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function renderChartFallbackTable(chart, rows) {
+  const columns = chartColumns(chart, rows);
+  if (columns.length === 0 || rows.length === 0) {
+    return `<div class="chart-table-fallback" data-chart-table-fallback><p>No chart table data.</p></div>`;
+  }
+  const head = columns.map((column, columnIndex) => (
+    `<th scope="col" tabindex="0" data-table-cell data-table-row="0" data-table-column="${columnIndex}" data-align="${escapeAttr(column.align)}">${escapeHtml(column.label)}</th>`
+  )).join("");
+  const body = rows.map((row, rowIndex) => {
+    const tableRow = rowIndex + 1;
+    return `<tr>${columns.map((column, columnIndex) => (
+      `<td tabindex="0" data-table-cell data-table-row="${tableRow}" data-table-column="${columnIndex}" data-align="${escapeAttr(column.align)}">${renderTableValue(tableCellValue(row, column, columnIndex))}</td>`
+    )).join("")}</tr>`;
+  }).join("\n");
+  return `<div class="chart-table-fallback table-scroll" data-chart-table-fallback>
+    <table class="report-data-table" data-report-data-table>
+      <thead><tr>${head}</tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderBarLikeChart(chart, rows) {
+  const encoding = chart.encoding && typeof chart.encoding === "object" ? chart.encoding : {};
+  const labelKey = encoding.label || encoding.x || encoding.category || "label";
+  const valueKey = encoding.value || encoding.y || "value";
+  const statusKey = encoding.status || encoding.color || "";
+  const max = Math.max(1, ...rows.map((row) => Math.abs(numericChartValue(row, valueKey))));
+  return `<div class="chart-bars" aria-hidden="true">
+    ${rows.map((row) => {
+      const value = numericChartValue(row, valueKey);
+      const width = Math.max(3, Math.min(100, Math.round((Math.abs(value) / max) * 100)));
+      const label = chartValue(row, labelKey, "Item");
+      const status = statusKey ? chartValue(row, statusKey, "") : "";
+      return `<div class="chart-bar-row">
+        <span class="chart-bar-label">${escapeHtml(label)}</span>
+        <span class="chart-bar-track"><span class="chart-bar-fill" style="width:${width}%"></span></span>
+        <span class="chart-bar-value">${escapeHtml(value)}</span>
+        ${status ? `<span class="chart-bar-status">${escapeHtml(status)}</span>` : ""}
+      </div>`;
+    }).join("\n")}
+  </div>`;
+}
+
+function renderLineLikeChart(chart, rows) {
+  const encoding = chart.encoding && typeof chart.encoding === "object" ? chart.encoding : {};
+  const labelKey = encoding.label || encoding.x || "label";
+  const valueKey = encoding.value || encoding.y || "value";
+  const values = rows.map((row) => numericChartValue(row, valueKey));
+  const max = Math.max(1, ...values);
+  const min = Math.min(0, ...values);
+  const span = Math.max(1, max - min);
+  const width = 620;
+  const height = 180;
+  const points = values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : Math.round((index / (values.length - 1)) * width);
+    const y = Math.round(height - ((value - min) / span) * height);
+    return `${x},${y}`;
+  }).join(" ");
+  return `<svg class="chart-line" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.altText || chart.title || "chart")}" aria-hidden="true">
+    <polyline points="${escapeAttr(points)}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+    ${values.map((value, index) => {
+      const [x, y] = points.split(" ")[index].split(",");
+      const label = chartValue(rows[index], labelKey, `Point ${index + 1}`);
+      return `<circle cx="${x}" cy="${y}" r="4"></circle><text x="${x}" y="${Math.max(14, Number(y) - 10)}">${escapeHtml(`${label}: ${value}`)}</text>`;
+    }).join("")}
+  </svg>`;
+}
+
+function renderMatrixChart(chart, rows) {
+  const encoding = chart.encoding && typeof chart.encoding === "object" ? chart.encoding : {};
+  const labelKey = encoding.label || encoding.option || "label";
+  const valueKey = encoding.value || encoding.status || "value";
+  return `<div class="chart-matrix" aria-hidden="true">
+    ${rows.map((row) => `<article class="chart-matrix-cell">
+      <strong>${escapeHtml(chartValue(row, labelKey, "Item"))}</strong>
+      <span>${escapeHtml(chartValue(row, valueKey, ""))}</span>
+    </article>`).join("\n")}
+  </div>`;
+}
+
+function renderChartVisual(chart, rows, degradedReason) {
+  if (degradedReason) {
+    return `<div class="chart-degraded" aria-hidden="true">${escapeHtml(degradedReason.replaceAll("-", " "))}</div>`;
+  }
+  if (["bar", "bullet"].includes(chart.type)) return renderBarLikeChart(chart, rows);
+  if (["line", "sparkline", "slope"].includes(chart.type)) return renderLineLikeChart(chart, rows);
+  if (chart.type === "matrix") return renderMatrixChart(chart, rows);
+  return `<div class="chart-degraded" aria-hidden="true">unsupported chart</div>`;
+}
+
+function renderChartSource(chart) {
+  const source = chart.source && typeof chart.source === "object" ? chart.source : {};
+  const label = source.label || chart.source || "Source not provided";
+  const href = safeLink(source.url);
+  const accessed = source.accessedAt ? ` (${source.accessedAt})` : "";
+  const sourceText = `${label}${accessed}`;
+  if (href) return `<a class="source-link" data-chart-source href="${escapeAttr(href)}" rel="noreferrer">${escapeHtml(sourceText)}</a>`;
+  return `<span class="source-link" data-chart-source>${escapeHtml(sourceText)}</span>`;
+}
+
+function renderChartSection(section) {
+  const chart = chartSpecFromSection(section);
+  const type = String(chart.type || "").toLowerCase();
+  const rows = chartDataRows(chart);
+  const hasRequiredShape = chart.title && chart.takeaway && chart.encoding && chart.source && chart.altText && rows.length > 0;
+  const degradedReason = !supportedChartTypes.includes(type)
+    ? "unsupported-chart-type"
+    : (!hasRequiredShape ? "malformed-chart" : "");
+  const normalizedChart = { ...chart, type: supportedChartTypes.includes(type) ? type : "fallback" };
+  const degradedAttr = degradedReason ? ` data-chart-degraded="${escapeAttr(degradedReason)}"` : "";
+
+  return `<section class="panel chart-panel" ${sectionAttrs(section)} data-chart-section data-chart-type="${escapeAttr(type || "unknown")}" data-chart-alt="${escapeAttr(chart.altText || "")}"${degradedAttr}>
+    ${renderSectionHeader(section, degradedReason ? "degraded" : section.status)}
+    <figure role="group" aria-label="${escapeAttr(chart.altText || chart.title || section.title)}">
+      <figcaption data-chart-takeaway>
+        <strong>${escapeHtml(chart.title || section.title)}</strong>
+        <span>${escapeHtml(chart.takeaway || "Chart degraded to table fallback.")}</span>
+      </figcaption>
+      ${renderChartVisual(normalizedChart, rows, degradedReason)}
+      <p class="chart-source-row">${renderChartSource(chart)}</p>
+      ${renderChartFallbackTable(chart, rows)}
+    </figure>
+  </section>`;
+}
+
 function highlightCode(source, language = "text", highlightLines = [], startLine = 1) {
   const hotLines = new Set(highlightLines);
   const lines = String(source ?? "").replace(/\r\n/g, "\n").split("\n");
@@ -597,7 +824,7 @@ function fallbackMermaidSvg(source, title, message) {
 }
 
 function sectionAttrs(section) {
-  return `id="${escapeAttr(section.id)}" data-section-type="${escapeAttr(section.type)}" data-section-group="${escapeAttr(section.group)}" data-section-status="${escapeAttr(section.status)}"`;
+  return `id="${escapeAttr(section.id)}" data-section-type="${escapeAttr(section.type)}" data-section-group="${escapeAttr(section.group)}" data-section-status="${escapeAttr(section.status)}" data-trust-level="${escapeAttr(normalizeTrustLevel(section.trustLevel))}"`;
 }
 
 function renderSummaryCards(section) {
@@ -613,9 +840,11 @@ function renderSummaryCards(section) {
 function renderRuntimeMarkdown(section, index) {
   const sourceId = `markdown-source-${index}`;
   const statusId = `markdown-status-${index}`;
+  const trustLevel = normalizeTrustLevel(section.trustLevel);
+  const trustedAttr = trustLevel === "trusted-generated" ? ' data-trusted="true"' : "";
   return `<section class="panel rich-section" ${sectionAttrs(section)} data-rich-section data-rich-kind="markdown" data-render-state="pending" data-source-fallback>
     ${renderSectionHeader(section)}
-    <div class="rich-target" data-rich-markdown data-rich-status-id="${statusId}" data-rich-section-id="${escapeAttr(section.id)}">${escapeHtml(safeAuditText(section.content || ""))}</div>
+    <div class="rich-target" data-rich-markdown data-rich-status-id="${statusId}" data-rich-section-id="${escapeAttr(section.id)}"${trustedAttr}>${escapeHtml(safeAuditText(section.content || ""))}</div>
     <template id="${sourceId}" data-rich-source data-source-fallback>${escapeHtml(safeAuditText(section.content || ""))}</template>
   </section>`;
 }
@@ -784,6 +1013,7 @@ function renderEvidenceSection(section, input) {
 async function renderSection(section, mode, index, input, options) {
   if (section.type === "summary-cards") return renderSummaryCards(section);
   if (section.type === "data-table") return renderDataTableSection(section);
+  if (section.type === "chart") return renderChartSection(section);
   if (section.type === "markdown") return renderMarkdownSection(section, mode, index);
   if (section.type === "mermaid") return renderMermaidSection(section, mode, index, options);
   if (section.type === "code") return renderCodeSection(section, mode, index);
@@ -797,12 +1027,58 @@ async function renderSection(section, mode, index, input, options) {
   return `<section class="panel" ${sectionAttrs(section)}>${renderSectionHeader(section)}<p>${escapeHtml(section.content || "")}</p></section>`;
 }
 
+function evidenceDomId(item, index) {
+  return slugify(item.id || `evidence-${index + 1}`);
+}
+
+function renderEvidenceValue(item) {
+  const parts = [];
+  if (item.value) parts.push(item.value);
+  if (item.command) parts.push(item.command);
+  if (item.filePath) parts.push(`${item.filePath}${item.line ? `:${item.line}` : ""}`);
+  if (item.sourceTitle) parts.push(item.sourceTitle);
+  return parts.join(" | ");
+}
+
+function renderEvidenceLinks(claim) {
+  const ids = Array.isArray(claim.evidenceIds) ? claim.evidenceIds : [];
+  if (ids.length === 0) return "";
+  return `<div class="claim-evidence-links" data-claim-evidence>
+    ${ids.map((id) => `<a href="#${escapeAttr(slugify(id))}" data-claim-evidence-id="${escapeAttr(id)}">${escapeHtml(id)}</a>`).join("")}
+  </div>`;
+}
+
+function renderConfidenceLabel(confidence) {
+  return confidenceLabels[String(confidence)] || String(confidence);
+}
+
+function renderClaims(items) {
+  return `<div class="evidence-grid claims-grid" data-claims>
+    ${(items || []).map((claim) => {
+      const kind = claim.kind || "assumption";
+      const confidence = claim.confidence ?? "unknown";
+      const limits = Array.isArray(claim.knownLimits) && claim.knownLimits.length > 0
+        ? `<ul class="claim-limits">${claim.knownLimits.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+        : "";
+      return `<article class="interactive-card evidence-card claim-card evidence-spotlight" data-evidence-spotlight data-claim-id="${escapeAttr(claim.id || "")}" data-claim-kind="${escapeAttr(kind)}" data-claim-confidence="${escapeAttr(confidence)}">
+        <div class="claim-card-header"><span class="meta">${escapeHtml(claimKindLabels[kind] || kind)}</span><span class="status-pill ${kind === "assumption" || confidence === "low" ? "status-warn" : "status-info"}">${escapeHtml(`可信度：${renderConfidenceLabel(confidence)}`)}</span></div>
+        <h3 class="claim-card-title">${escapeHtml(claim.statement || "")}</h3>
+        ${claim.dateRange ? `<p class="meta">Date range: ${escapeHtml(typeof claim.dateRange === "string" ? claim.dateRange : `${claim.dateRange.start || ""} - ${claim.dateRange.end || ""}`)}</p>` : ""}
+        ${renderEvidenceLinks(claim)}
+        ${limits}
+      </article>`;
+    }).join("\n")}
+  </div>`;
+}
+
 function renderEvidence(items) {
   return `<div class="evidence-grid" data-evidence>
-    ${items.map((item) => `<article class="interactive-card evidence-card evidence-spotlight" data-evidence-spotlight data-evidence-kind="${escapeAttr(item.kind)}">
+    ${items.map((item, index) => `<article class="interactive-card evidence-card evidence-spotlight" id="${escapeAttr(evidenceDomId(item, index))}" data-evidence-spotlight data-evidence-id="${escapeAttr(item.id || evidenceDomId(item, index))}" data-evidence-kind="${escapeAttr(item.kind)}" data-trust-level="${escapeAttr(normalizeTrustLevel(item.trustLevel))}">
       <div class="split-row"><span class="meta">${escapeHtml(kindLabels[item.kind] || item.kind)}</span><span class="status-pill ${statusClass(item.status || "info")}">${escapeHtml(statusLabel(item.status || "info"))}</span></div>
       <h3>${escapeHtml(item.label)}</h3>
-      <p>${escapeHtml(item.value || "")}</p>
+      <p>${escapeHtml(renderEvidenceValue(item))}</p>
+      ${item.sourceUrl ? `<a class="source-link" href="${escapeAttr(safeLink(item.sourceUrl))}" rel="noreferrer">${escapeHtml(item.sourceTitle || item.sourceUrl)}</a>` : ""}
+      ${item.knownLimits?.length ? `<ul class="claim-limits">${item.knownLimits.map((limit) => `<li>${escapeHtml(limit)}</li>`).join("")}</ul>` : ""}
     </article>`).join("\n")}
   </div>`;
 }
@@ -810,8 +1086,7 @@ function renderEvidence(items) {
 function renderVerification(items) {
   return `<div class="evidence-grid" data-verification>
     ${(items || []).map((item) => `<article class="interactive-card evidence-card evidence-spotlight" data-evidence-spotlight data-verification-status="${escapeAttr(item.status)}">
-      <div class="split-row"><span class="meta">验证</span><span class="status-pill ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span></div>
-      <h3>${escapeHtml(item.label)}</h3>
+      <div class="split-row"><h3>${escapeHtml(item.label)}</h3><span class="status-pill ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span></div>
       <p>${escapeHtml(item.detail || "")}</p>
     </article>`).join("\n")}
   </div>`;
@@ -831,7 +1106,7 @@ function renderRuntimeDependencies(mode, input = {}) {
       <span class="status-pill status-warn" data-runtime-state-pill>待处理</span>
     </div>
     <div class="evidence-grid">
-      ${runtimeLibraries.map((item) => `<article class="evidence-card" data-runtime-dependency="${escapeAttr(item.id)}" data-runtime-dependency-name="${escapeAttr(item.name)}" data-runtime-dependency-version="${escapeAttr(item.version)}" data-runtime-dependency-url="${escapeAttr(item.url)}" data-runtime-dependency-state="pending">
+      ${runtimeLibraries.map((item) => `<article class="evidence-card" data-runtime-dependency="${escapeAttr(item.id)}" data-runtime-dependency-name="${escapeAttr(item.name)}" data-runtime-dependency-version="${escapeAttr(item.version)}" data-runtime-dependency-url="${escapeAttr(item.url)}" data-runtime-dependency-integrity="${escapeAttr(item.integrity || "")}" data-runtime-dependency-integrity-exemption="${escapeAttr(item.integrityExemption || "")}" data-runtime-dependency-state="pending">
         <div class="split-row"><strong>${escapeHtml(item.name)}@${escapeHtml(item.version)}</strong><span class="status-pill status-warn">待处理</span></div>
         <p>${escapeHtml(item.purpose)}</p>
         <p class="source-link">${escapeHtml(item.url)}</p>
@@ -846,10 +1121,13 @@ function runtimeScriptTags(mode) {
   const highlight = runtimeLibraries.find((item) => item.id === "highlightjs");
   const marked = runtimeLibraries.find((item) => item.id === "marked");
   const mermaid = runtimeLibraries.find((item) => item.id === "mermaid");
+  const runtimeAttrs = (item) => item.integrity
+    ? ` integrity="${escapeAttr(item.integrity)}" crossorigin="anonymous"`
+    : ` data-integrity-exemption="${escapeAttr(item.integrityExemption || "not-available")}"`;
   return `
-  <link rel="stylesheet" href="${escapeAttr(highlight.cssUrl)}">
-  <script src="${escapeAttr(dompurify.url)}"></script>
-  <script src="${escapeAttr(highlight.url)}"></script>
+  <link rel="stylesheet" href="${escapeAttr(highlight.cssUrl)}" data-runtime-stylesheet="highlightjs"${highlight.cssIntegrity ? ` integrity="${escapeAttr(highlight.cssIntegrity)}" crossorigin="anonymous"` : ` data-integrity-exemption="${escapeAttr(highlight.cssIntegrityExemption || "not-available")}"`}>
+  <script src="${escapeAttr(dompurify.url)}" data-runtime-script="dompurify"${runtimeAttrs(dompurify)}></script>
+  <script src="${escapeAttr(highlight.url)}" data-runtime-script="highlightjs"${runtimeAttrs(highlight)}></script>
   <script type="module">
     import { marked } from "${marked.url}";
     import mermaid from "${mermaid.url}";
@@ -861,40 +1139,53 @@ function runtimeScriptTags(mode) {
 
 function renderGroupedNav(sections) {
   const entries = sections.filter(Boolean);
-  const groups = new Map();
-  for (const section of entries) {
-    const group = section.group || "main";
-    if (!groups.has(group)) groups.set(group, []);
-    groups.get(group).push(section);
-  }
-
-  const preferredOrder = [
-    "summary",
-    "main",
-    "changes",
-    "impact",
-    "risks",
-    "decision",
-    "verification",
-    "next",
-    "details",
-    "overview",
-    "diagrams",
-    "code",
-    "evidence",
-    "actions"
-  ];
-  const groupOrder = [...preferredOrder, ...[...groups.keys()].filter((group) => !preferredOrder.includes(group))];
-  return `<nav class="report-nav" data-report-nav data-report-region="navigation" aria-label="报告目录">
-    <div class="report-nav-title">目录</div>
-    ${groupOrder.filter((group) => groups.has(group)).map((group) => {
-      const items = groups.get(group).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
-      return `<div class="report-nav-group" data-nav-group="${escapeAttr(group)}">
-        <div class="report-nav-group-title">${escapeHtml(groupLabels[group] || group)}</div>
-        ${items.map((section) => `<a href="#${escapeAttr(section.id)}" title="${escapeAttr(section.title)}" data-nav-link data-nav-status="${escapeAttr(section.status || "info")}"><span>${escapeHtml(section.title)}</span></a>`).join("\n")}
-      </div>`;
-    }).join("\n")}
+  return `<nav class="report-nav" data-report-nav data-nav-order="dom" data-report-region="navigation" aria-label="报告速览">
+    <div class="report-nav-title">速览</div>
+    <div class="report-nav-group" data-nav-group="reading-order">
+      <div class="report-nav-group-title">阅读顺序</div>
+      ${entries.map((section, index) => `<a href="#${escapeAttr(section.id)}" title="${escapeAttr(section.title)}" data-nav-link data-nav-index="${index + 1}" data-nav-group-name="${escapeAttr(section.group || "main")}" data-nav-status="${escapeAttr(section.status || "info")}"><span>${escapeHtml(section.title)}</span></a>`).join("\n")}
+    </div>
   </nav>`;
+}
+
+function trimLeadingConclusion(value) {
+  return String(value || "").replace(/^\s*(?:结论|Conclusion)\s*[：:]\s*/i, "").trim();
+}
+
+function renderHeroStats(input, sectionCount) {
+  const verification = input.verification || [];
+  const passed = verification.filter((item) => item.status === "pass").length;
+  const stats = [
+    { label: "验证", value: verification.length ? `${passed}/${verification.length}` : "0", detail: "通过" },
+    { label: "证据", value: String((input.evidence || []).length), detail: "条" },
+    { label: "行动", value: String((input.nextActions || []).length), detail: "项" }
+  ].filter((item) => item.value !== "0");
+
+  if (stats.length === 0) return "";
+  return `<div class="hero-stat-grid" aria-label="报告摘要指标">
+    ${stats.map((item) => `<div class="hero-stat"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><small>${escapeHtml(item.detail)}</small></div>`).join("\n")}
+  </div>`;
+}
+
+function renderHeroDecisionGrid(intent) {
+  const criteria = (intent.successCriteria || []).slice(0, 3);
+  const criteriaHtml = criteria.length > 0
+    ? `<ul class="hero-criteria-list">${criteria.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+    : "";
+  return `<div class="hero-decision-grid" data-report-intent data-primary-question="${escapeAttr(intent.primaryQuestion)}" data-time-budget="${escapeAttr(intent.timeBudget)}" data-artifact-kind="${escapeAttr(intent.artifactKind)}">
+    <article class="hero-decision-card">
+      <div class="meta">漏点</div>
+      <strong>${escapeHtml(intent.primaryQuestion)}</strong>
+    </article>
+    <article class="hero-decision-card">
+      <div class="meta">修复</div>
+      <strong>${escapeHtml(intent.decision)}</strong>
+    </article>
+    <article class="hero-decision-card">
+      <div class="meta">验收口径</div>
+      ${criteriaHtml}
+    </article>
+  </div>`;
 }
 
 function validateInput(input) {
@@ -904,6 +1195,7 @@ function validateInput(input) {
   if (!input.summary) errors.push("Missing summary.");
   if (!input.status) errors.push("Missing status.");
   if (!Array.isArray(input.sections) || input.sections.length === 0) errors.push("sections must be a non-empty array.");
+  if (input.claims !== undefined && !Array.isArray(input.claims)) errors.push("claims must be an array when provided.");
   if (input.evidence !== undefined && !Array.isArray(input.evidence)) errors.push("evidence must be an array when provided.");
   if (input.verification !== undefined && !Array.isArray(input.verification)) errors.push("verification must be an array when provided.");
   if (input.nextActions !== undefined && !Array.isArray(input.nextActions)) errors.push("nextActions must be an array when provided.");
@@ -917,6 +1209,9 @@ function supplementalSections(input, mode) {
   const sections = [];
   if (isRuntimeMode(mode) && input.showRuntimeDependencies === true) {
     sections.push({ id: "runtime-dependencies", title: "运行时依赖", group: "verification", status: "pending", priority: 880 });
+  }
+  if ((input.claims || []).length > 0) {
+    sections.push({ id: "claims", title: "关键判断", group: "claims", status: "info", priority: 890 });
   }
   if ((input.evidence || []).length > 0) {
     sections.push({ id: "evidence", title: "证据", group: "evidence", status: "info", priority: 900 });
@@ -935,6 +1230,7 @@ async function createReport(input, options = {}) {
   const { mode, compatibility } = normalizeRenderMode(input.renderMode);
   const template = input.template || "implementation-handoff";
   const meta = templateMeta[template];
+  const intent = inferReportIntent(input, template, mode);
   const generatedAt = input.generatedAt || new Date().toISOString();
   const normalizedSections = input.sections.map(normalizeSection);
   const sections = [];
@@ -956,15 +1252,21 @@ async function createReport(input, options = {}) {
 
   const extras = supplementalSections(input, mode);
   const nav = renderGroupedNav([...normalizedSections, ...extras]);
+  const conclusion = trimLeadingConclusion(input.summary);
+  const heroStats = renderHeroStats(input, normalizedSections.length + extras.length);
+  const heroDecisionGrid = renderHeroDecisionGrid(intent);
   const compatibilityBadge = compatibility ? `<span class="status-pill status-warn" data-render-compatibility="${escapeAttr(compatibility)}">${escapeHtml(compatibility)}</span>` : "";
+  const claimsSection = (input.claims || []).length > 0
+    ? `<section class="panel supplemental-panel" id="claims" data-section-type="claims" data-section-group="claims" data-report-region="claims">${renderSupplementalHeading({ group: "claims", title: "关键判断", summary: "每条判断都保留证据入口和可信度。", status: "info" })}${renderClaims(input.claims || [])}</section>`
+    : "";
   const evidenceSection = (input.evidence || []).length > 0
-    ? `<section class="panel" id="evidence" data-section-type="evidence" data-section-group="evidence" data-report-region="evidence"><h2>证据</h2>${renderEvidence(input.evidence || [])}</section>`
+    ? `<section class="panel supplemental-panel" id="evidence" data-section-type="evidence" data-section-group="evidence" data-report-region="evidence">${renderSupplementalHeading({ group: "evidence", title: "证据", summary: "文件、命令和验证来源集中在这里。", status: "info" })}${renderEvidence(input.evidence || [])}</section>`
     : "";
   const verificationSection = (input.verification || []).length > 0
-    ? `<section class="panel" id="verification" data-section-type="verification" data-section-group="verification" data-report-region="verification"><h2>验证</h2>${renderVerification(input.verification || [])}</section>`
+    ? `<section class="panel supplemental-panel" id="verification" data-section-type="verification" data-section-group="verification" data-report-region="verification">${renderSupplementalHeading({ group: "verification", title: "验证", summary: "命令级验收和降级项。", status: "info" })}${renderVerification(input.verification || [])}</section>`
     : "";
   const nextActionsSection = (input.nextActions || []).length > 0
-    ? `<section class="panel" id="next-actions" data-section-type="actions" data-section-group="next" data-report-region="actions"><div class="split-row"><h2>下一步</h2><button data-copy-from="#next-action-list">复制行动项</button></div><ul id="next-action-list">${(input.nextActions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>`
+    ? `<section class="panel supplemental-panel" id="next-actions" data-section-type="actions" data-section-group="next" data-report-region="actions"><div class="section-heading split-row"><div><h2>下一步</h2><p class="section-summary">只保留后续会真正改变行为的动作。</p></div><button data-copy-from="#next-action-list">复制行动项</button></div><ul id="next-action-list" class="action-list">${(input.nextActions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>`
     : "";
 
   return stripTrailingWhitespace(`<!doctype html>
@@ -980,7 +1282,7 @@ async function createReport(input, options = {}) {
 </head>
 <body>
   <main class="report-shell">
-    <header class="report-hero" data-report-region="hero">
+    <header class="report-hero" data-report-region="hero" data-report-intent data-primary-question="${escapeAttr(intent.primaryQuestion)}" data-time-budget="${escapeAttr(intent.timeBudget)}" data-artifact-kind="${escapeAttr(intent.artifactKind)}">
       <div class="title-row">
         <div>
           <div class="eyebrow">${escapeHtml(meta.label)} | ${escapeHtml(meta.useCase)}</div>
@@ -988,9 +1290,11 @@ async function createReport(input, options = {}) {
         </div>
         <div class="toolbar"><span class="status-pill ${statusClass(input.status)}">状态：${escapeHtml(statusLabel(input.status))}</span>${compatibilityBadge}</div>
       </div>
-      <div class="lede-grid">
-        <article class="interactive-card evidence-card"><div class="meta">结论</div><strong>${escapeHtml(input.summary)}</strong></article>
+      <div class="hero-brief">
+        <p class="hero-summary-text">${inlineMarkdown(conclusion)}</p>
+        ${heroStats}
       </div>
+      ${heroDecisionGrid}
     </header>
 
     <div class="report-layout">
@@ -998,6 +1302,7 @@ async function createReport(input, options = {}) {
       <div class="report-section-stack" data-report-region="sections">
         ${sections.join("\n")}
         ${renderRuntimeDependencies(mode, input)}
+        ${claimsSection}
         ${evidenceSection}
         ${verificationSection}
         ${nextActionsSection}
